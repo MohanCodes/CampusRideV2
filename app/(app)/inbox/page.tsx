@@ -1,7 +1,9 @@
 import { AppShell } from "@/components/AppShell";
 import { EmptyState, ErrorState } from "@/components/states";
+import { ChatListItem } from "@/components/chat/ChatListItem";
 import { RequestRow } from "@/components/trip/RequestRow";
 import { getUser, requireOnboarded } from "@/lib/auth/dal";
+import { getChatThreads } from "@/lib/data/chat";
 import { getInbox } from "@/lib/data/rides";
 import { demoForcesError, getNow, isDemo } from "@/lib/demo";
 
@@ -13,7 +15,11 @@ export default async function InboxPage({ searchParams }: PageProps<"/inbox">) {
   if (!demo) await requireOnboarded("/inbox");
   const signedIn = Boolean(await getUser());
   const now = getNow();
-  const res = demoForcesError(sp.fail) ? { ok: false as const } : await getInbox();
+  const fail = demoForcesError(sp.fail);
+  const [res, chats] = await Promise.all([
+    fail ? { ok: false as const } : getInbox(),
+    fail ? { ok: false as const } : getChatThreads(),
+  ]);
 
   return (
     <AppShell signedIn={signedIn} demo={demo}>
@@ -27,9 +33,26 @@ export default async function InboxPage({ searchParams }: PageProps<"/inbox">) {
         ) : res.data.length === 0 ? (
           <EmptyState title="Nothing waiting" body="When someone asks for a seat on your trip, it shows up here. We'll email you too." />
         ) : (
-          <ul className="grid gap-4 lg:grid-cols-2">
+          <ul className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {res.data.map((r) => (
               <RequestRow key={r.id} request={r} now={now} showTrip />
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section aria-labelledby="chats-heading" className="mt-10">
+        <h2 id="chats-heading" className="t-h2 mb-3 border-b border-line pb-2">
+          Chats
+        </h2>
+        {!chats.ok ? (
+          <ErrorState message="We couldn't load your chats. Check your connection and try again." href="/inbox" />
+        ) : chats.data.length === 0 ? (
+          <EmptyState title="No chats yet" body="You can chat with a driver or rider once a seat is accepted." />
+        ) : (
+          <ul className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {chats.data.map((t) => (
+              <ChatListItem key={t.id} thread={t} now={now} />
             ))}
           </ul>
         )}

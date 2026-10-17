@@ -33,3 +33,5 @@ alter default privileges in schema public grant all on functions to anon, authen
 alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
 grant all on all tables in schema storage to anon, authenticated, service_role;
 grant execute on all functions in schema auth, storage to anon, authenticated, service_role;
+
+create publication supabase_realtime;

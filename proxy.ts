@@ -8,8 +8,8 @@ import { updateSession } from "@/lib/supabase/proxy";
 export async function proxy(request: NextRequest) {
   const { response, signedIn } = await updateSession(request);
   const { pathname, search } = request.nextUrl;
-  // Demo mode (sample data, no backend) also opens the trip, post, rides and inbox pages so the screens can be reviewed.
-  const demoOpen = isDemo() && ["/trip/", "/post", "/rides", "/inbox"].some((p) => pathname.startsWith(p));
+  // Demo mode (sample data, no backend) also opens the trip, post, rides, inbox and chat pages so the screens can be reviewed.
+  const demoOpen = isDemo() && ["/trip/", "/post", "/rides", "/inbox", "/chat/"].some((p) => pathname.startsWith(p));
   if (!signedIn && !demoOpen && isProtectedPath(pathname)) {
     return NextResponse.redirect(new URL(signInUrl(pathname, search), request.url));
   }

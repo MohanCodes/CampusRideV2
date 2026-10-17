@@ -132,7 +132,7 @@ function DayGroup({ dayKey: key, now, children }: { dayKey: string; now: Date; c
       <h2 id={`day-${key}`} className="t-h2 mb-3 border-b border-line pb-2">
         {formatDayHeader(key, now)}
       </h2>
-      <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">{children}</div>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">{children}</div>
     </section>
   );
 }

@@ -56,6 +56,8 @@ export type IncomingRequest = {
   message: string | null;
   status: "pending" | "accepted";
   createdAt: string;
+  // The chat with this rider, once accepted.
+  conversationId?: string | null;
 };
 
 export type TripStatus = "open" | "cancelled" | "past";
@@ -76,6 +78,8 @@ export type TripDetail = {
   seatsTaken: number;
   // The rider's own request on this trip, so it can be cancelled.
   myRequestId: string | null;
+  // The chat with the driver, once the rider is accepted.
+  conversationId: string | null;
   // The driver's view of who asked (only filled in for the driver's own trip).
   requests: IncomingRequest[] | null;
   destinationName: string;
@@ -97,3 +101,39 @@ export type TripDetail = {
 };
 
 export type Result<T> = { ok: true; data: T } | { ok: false };
+
+// Chat -----------------------------------------------------------------------------------------------
+export type ChatMessage = {
+  id: number;
+  senderId: string;
+  body: string;
+  kind: "user" | "system";
+  createdAt: string;
+};
+
+// One line in the Inbox "Chats" list.
+export type ChatThread = {
+  id: string;
+  tripId: string;
+  tripName: string;
+  departsAt: string;
+  closesAt: string;
+  other: Person;
+  lastBody: string | null;
+  lastAt: string | null;
+  lastKind: "user" | "system" | null;
+  lastFromMe: boolean;
+  unread: number;
+};
+
+export type Conversation = {
+  id: string;
+  tripId: string;
+  tripName: string;
+  departsAt: string;
+  other: Person;
+  messages: ChatMessage[];
+  // Whether the person can still send: the chat hasn't closed, the trip is on, and the seat is accepted.
+  open: boolean;
+  closedReason: "time" | "trip_cancelled" | "seat_cancelled" | null;
+};

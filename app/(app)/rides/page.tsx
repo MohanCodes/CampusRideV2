@@ -69,7 +69,7 @@ export default async function RidesPage({ searchParams }: PageProps<"/rides">) {
             )}
           </EmptyState>
         ) : (
-          <ul className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3" aria-label={RIDE_TABS.find((t) => t.id === tab)!.label}>
+          <ul className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3" aria-label={RIDE_TABS.find((t) => t.id === tab)!.label}>
             {groups[tab].map((r) => (
               <li key={r.trip.id + r.role} data-testid="ride-row" data-role={r.role}>
                 <TripCard

@@ -104,7 +104,7 @@ export function TripDetailView({ trip, now, signedIn, demo, sent = false }: { tr
                   No one has asked for a seat yet. We&apos;ll email you when someone does.
                 </p>
               ) : (
-                <ul className="grid gap-3 md:grid-cols-2">
+                <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   {trip.requests.map((r) => (
                     <RequestRow key={r.id} request={r} now={now} />
                   ))}
@@ -171,9 +171,15 @@ function ActionArea({ trip, when, findAnother }: { trip: TripDetail; when: strin
             {status("accepted")} {first} accepted your request.
           </p>
           <div className="flex flex-wrap items-center gap-3">
-            <button type="button" className="btn-primary" disabled={!FEATURES.chat}>
-              Message driver <span aria-hidden="true">↗</span>
-            </button>
+            {FEATURES.chat && trip.conversationId ? (
+              <Link href={`/chat/${trip.conversationId}`} className="btn-primary">
+                Message driver <span aria-hidden="true">↗</span>
+              </Link>
+            ) : (
+              <button type="button" className="btn-primary" disabled>
+                Message driver <span aria-hidden="true">↗</span>
+              </button>
+            )}
             <CopyTripDetails
               text={tripSummary({
                 driverFirstName: first, carMake: trip.carMake, carColor: trip.carColor, plate: trip.plate ?? "",
@@ -181,7 +187,7 @@ function ActionArea({ trip, when, findAnother }: { trip: TripDetail; when: strin
               })}
             />
           </div>
-          {!FEATURES.chat && <p className="text-sm text-muted">Chat isn&apos;t open yet.</p>}
+          {!trip.conversationId && <p className="text-sm text-muted">The chat isn&apos;t ready yet. Try again in a moment.</p>}
           {trip.myRequestId && <CancelRequestButton requestId={trip.myRequestId} tripId={trip.id} label="Cancel my seat" />}
         </div>
       );

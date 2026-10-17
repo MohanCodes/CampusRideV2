@@ -231,16 +231,18 @@ test.describe("Inbox", () => {
     await expect(page.getByRole("button", { name: "Decline Sam" })).toBeVisible();
   });
 
-  test("the Inbox link carries a badge with how many are waiting", async ({ page }) => {
+  test("the Inbox link carries a badge: two requests and one unread message", async ({ page }) => {
     await page.goto("/");
     const badge = page.getByTestId("nav-badge").and(page.locator(":visible"));
-    await expect(badge).toHaveText(/2/);
-    await expect(page.getByRole("link", { name: /Inbox/ }).and(page.locator(":visible"))).toContainText("2 waiting");
+    await expect(badge).toHaveText(/3/);
+    await expect(page.getByRole("link", { name: /Inbox/ }).and(page.locator(":visible"))).toContainText("3 waiting");
   });
 
   test("the error state offers Try again", async ({ page }) => {
     await page.goto("/inbox?fail=1");
-    await expect(page.getByTestId("error-state")).toContainText("We couldn't load your inbox");
+    await expect(page.getByTestId("error-state")).toHaveCount(2); // seat requests and chats each say so
+    await expect(page.getByTestId("error-state").first()).toContainText("We couldn't load your inbox");
+    await expect(page.getByTestId("error-state").nth(1)).toContainText("We couldn't load your chats");
   });
 });
 

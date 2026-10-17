@@ -1,4 +1,4 @@
-import type { IncomingRequest, Person, RequestCardData, RideRow, TripCardData, TripDetail, TripState } from "./types";
+import type { ChatMessage, ChatThread, Conversation, IncomingRequest, Person, RequestCardData, RideRow, TripCardData, TripDetail, TripState } from "./types";
 
 // Sample data for demo mode. It mirrors supabase/seed_dev.sql (the same people, places and
 // timing), but none of it is real. Times are relative to `now` so the board always looks current.
@@ -63,7 +63,7 @@ export function demoOwnRequests(now: Date): IncomingRequest[] {
   return [
     { ...base, id: "q1", rider: alex, seats: 1, message: "Hi, I just need Target and back, no big bags.", status: "pending", createdAt: iso(now, -2) },
     { ...base, id: "q2", rider: sam, seats: 2, message: null, status: "pending", createdAt: iso(now, -1) },
-    { ...base, id: "q3", rider: jordan, seats: 1, message: null, status: "accepted", createdAt: iso(now, -5) },
+    { ...base, id: "q3", rider: jordan, seats: 1, message: null, status: "accepted", createdAt: iso(now, -5), conversationId: "c2" },
   ];
 }
 
@@ -108,6 +108,7 @@ export function demoTripDetail(id: string, now: Date, view?: DemoView): TripDeta
     tripStatus: s.status,
     seatsTaken: s.taken,
     myRequestId: state === "pending" || state === "accepted" ? "demo-request" : null,
+    conversationId: state === "accepted" ? "c1" : null,
     requests: state === "own" ? demoOwnRequests(now) : null,
     destinationName: s.dest,
     departsAt: iso(now, s.inHours),
@@ -125,4 +126,64 @@ export function demoTripDetail(id: string, now: Date, view?: DemoView): TripDeta
     state,
     chip: s.chip,
   };
+}
+
+// Chat -----------------------------------------------------------------------------------------------
+// c1: the rider side (Sam is driving, with one unread message). c2: the driver side (Jordan is a rider).
+// c3: a chat that closed because the trip was over a day ago.
+const meMsg = (id: number, body: string, at: string): ChatMessage => ({ id, senderId: DEMO_ME, body, kind: "user", createdAt: at });
+const themMsg = (id: number, who: Person, body: string, at: string): ChatMessage => ({ id, senderId: who.id, body, kind: "user", createdAt: at });
+const sysMsg = (id: number, who: Person, body: string, at: string): ChatMessage => ({ id, senderId: who.id, body, kind: "system", createdAt: at });
+
+export function demoConversation(id: string, now: Date): Conversation | null {
+  const t3 = SEEDS.find((x) => x.id === "t3")!;
+  const t10 = SEEDS.find((x) => x.id === "t10")!;
+  const t12 = SEEDS.find((x) => x.id === "t12")!;
+  if (id === "c1") {
+    return {
+      id, tripId: "t3", tripName: t3.dest, departsAt: iso(now, t3.inHours), other: sam, open: true, closedReason: null,
+      messages: [
+        sysMsg(1, sam, "Sam accepted Riley. You can plan the pickup here.", iso(now, -20)),
+        themMsg(2, sam, "Hi! I'll be in a green Subaru Outback.", iso(now, -19)),
+        meMsg(3, "Great, see you at Balch Hall.", iso(now, -18)),
+        themMsg(4, sam, "Running 5 min late, sorry!", iso(now, -1)),
+      ],
+    };
+  }
+  if (id === "c2") {
+    return {
+      id, tripId: "t10", tripName: t10.dest, departsAt: iso(now, t10.inHours), other: jordan, open: true, closedReason: null,
+      messages: [
+        sysMsg(1, DEMO_ME_PERSON, "Riley accepted Jordan. You can plan the pickup here.", iso(now, -5)),
+        themMsg(2, jordan, "Thanks for the ride. I only have a backpack.", iso(now, -4)),
+        meMsg(3, "No problem. Platt steps at 6:55?", iso(now, -3.5)),
+      ],
+    };
+  }
+  if (id === "c3") {
+    return {
+      id, tripId: "t12", tripName: t12.dest, departsAt: iso(now, t12.inHours), other: alex, open: false, closedReason: "time",
+      messages: [
+        sysMsg(1, DEMO_ME_PERSON, "Riley accepted Alex. You can plan the pickup here.", iso(now, -50)),
+        meMsg(2, "Meet at the front steps.", iso(now, -49)),
+        themMsg(3, alex, "I'm here.", iso(now, -31)),
+      ],
+    };
+  }
+  return null;
+}
+
+const DEMO_ME_PERSON: Person = { id: DEMO_ME, firstName: "Riley", campusId: "hmc", classYear: 2027, avatarUrl: null };
+
+export function demoThreads(now: Date): ChatThread[] {
+  return ["c1", "c2", "c3"].map((id) => {
+    const c = demoConversation(id, now)!;
+    const last = c.messages[c.messages.length - 1];
+    const unread = c.messages.filter((m) => m.kind === "user" && m.senderId !== DEMO_ME && id === "c1" && m.id === 4).length;
+    return {
+      id, tripId: c.tripId, tripName: c.tripName, departsAt: c.departsAt,
+      closesAt: new Date(new Date(c.departsAt).getTime() + 24 * 3600_000).toISOString(),
+      other: c.other, lastBody: last.body, lastAt: last.createdAt, lastKind: last.kind, lastFromMe: last.senderId === DEMO_ME, unread,
+    };
+  }).sort((a, b) => (b.lastAt ?? "").localeCompare(a.lastAt ?? ""));
 }

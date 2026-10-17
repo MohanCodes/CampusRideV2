@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { RequestActions } from "@/components/trip/RequestActions";
+import { FEATURES } from "@/lib/features";
 import { StatusBadge } from "@/components/StatusBadge";
 import { UserRow } from "@/components/UserRow";
 import type { IncomingRequest } from "@/lib/data/types";
@@ -27,6 +28,11 @@ export function RequestRow({ request, now, showTrip = false }: { request: Incomi
         {r.status === "pending" && r.seatsLeft < r.seats ? " (only " + seatsText(r.seatsLeft) + " left)" : ""}.
       </p>
       {r.message && <p className="mt-2">&ldquo;{r.message}&rdquo;</p>}
+      {r.status === "accepted" && FEATURES.chat && r.conversationId && (
+        <Link href={`/chat/${r.conversationId}`} className="btn-secondary mt-3">
+          Message {r.rider.firstName}
+        </Link>
+      )}
       {r.status === "pending" && <RequestActions requestId={r.id} tripId={r.tripId} riderName={r.rider.firstName} />}
     </li>
   );

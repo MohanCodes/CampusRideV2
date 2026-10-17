@@ -145,14 +145,17 @@ export async function getTripDetail(id: string, demoView?: DemoView): Promise<Re
     if (error) return { ok: false };
     if (!trip) return { ok: true, data: null };
 
-    const [driverRes, pointRes, plateRes, standRes, mineRes, placeRes] = await Promise.all([
+    const [driverRes, pointRes, plateRes, standRes, mineRes, placeRes, convRes] = await Promise.all([
       supabase.from("public_profiles").select("id, first_name, campus_id, class_year, avatar_path").eq("id", trip.driver_id).maybeSingle(),
       supabase.from("meetup_points").select("name, lat, lng").eq("id", trip.meetup_point_id).maybeSingle(),
       supabase.from("trip_private").select("car_plate").eq("trip_id", id).maybeSingle(),
       supabase.rpc("get_trip_meetup_detail", { p_trip: id }),
       supabase.from("seat_requests").select("id, status").eq("trip_id", id).eq("rider_id", user.id).maybeSingle(),
       trip.place_id ? supabase.from("places").select("chip").eq("id", trip.place_id).maybeSingle() : Promise.resolve({ data: null }),
+      // The chats on this trip: the rider sees their own, the driver sees one per accepted rider.
+      supabase.from("conversations").select("id, rider_id").eq("trip_id", id),
     ]);
+    const chatByRider = new Map((convRes.data ?? []).map((c) => [c.rider_id as string, c.id as string]));
 
     const d = driverRes.data;
     const urls = await avatarUrls(supabase, [d?.avatar_path ?? null]);
@@ -179,10 +182,10 @@ export async function getTripDetail(id: string, demoView?: DemoView): Promise<Re
       const { data: rows } = await supabase
         .from("seat_requests").select("id, trip_id, rider_id, seats, message, status, created_at")
         .eq("trip_id", id).in("status", ["pending", "accepted"]).order("created_at");
-      requests = await loadIncoming(supabase, rows ?? [], new Map([[id, {
+      requests = (await loadIncoming(supabase, rows ?? [], new Map([[id, {
         destination_name: trip.destination_name, departs_at: trip.departs_at,
         meetup_point_name: pointRes.data?.name ?? null, seats_left: trip.seats_total - trip.seats_taken,
-      }]]));
+      }]]))).map((r) => ({ ...r, conversationId: chatByRider.get(r.rider.id) ?? null }));
     }
 
     return {
@@ -192,6 +195,7 @@ export async function getTripDetail(id: string, demoView?: DemoView): Promise<Re
         tripStatus: trip.status,
         seatsTaken: trip.seats_taken,
         myRequestId: mineRes.data?.id ?? null,
+        conversationId: state === "accepted" ? (chatByRider.get(user.id) ?? null) : null,
         requests,
         destinationName: trip.destination_name,
         departsAt: trip.departs_at,

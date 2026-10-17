@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { avatarUrls } from "./avatars";
 import { loadIncoming, type TripBrief } from "./incoming";
 import { rowToCard, type TripRowLike } from "./map";
-import { demoInbox, demoRides } from "./mock";
+import { demoInbox, demoRides, demoThreads } from "./mock";
 import type { IncomingRequest, MySeatStatus, RideRow, Result, SeatStatus, TripStatus } from "./types";
 
 type TripCardRow = TripRowLike & { status: TripStatus };
@@ -89,7 +89,7 @@ export async function getInbox(): Promise<Result<IncomingRequest[]>> {
 
 // The number on the Inbox badge.
 export async function getInboxCount(): Promise<number> {
-  if (isDemo()) return demoInbox(getNow()).filter((r) => r.status === "pending").length;
+  if (isDemo()) return demoInbox(getNow()).length + demoThreads(getNow()).reduce((n, t) => n + t.unread, 0);
   try {
     const supabase = await createClient();
     if (!supabase || !(await getUser())) return 0;

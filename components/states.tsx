@@ -58,7 +58,7 @@ export function SkeletonCard() {
 
 export function SkeletonGrid({ count = 6 }: { count?: number }) {
   return (
-    <div role="status" aria-label="Loading trips" className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+    <div role="status" aria-label="Loading trips" className="grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3">
       {Array.from({ length: count }, (_, i) => (
         <SkeletonCard key={i} />
       ))}

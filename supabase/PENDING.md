@@ -37,3 +37,11 @@ All seven domains in `seed.sql` still need confirming with each college's IT off
   per-email setting in the local file.)
 - Use `supabase/templates/code.html` for both the "Confirm signup" and "Magic link" emails.
 - Set SMTP to Resend once the sending domain is verified (SPF, DKIM, DMARC).
+
+## Live chat (Realtime)
+
+The migration adds `messages` to the `supabase_realtime` publication, and the chat page also checks for new
+messages every few seconds whenever the live feed isn't connected, so chat works either way. The live feed
+itself could not be exercised without a Supabase project: when staging exists, open one chat in two browsers
+and confirm a message appears in the other without a refresh. Realtime must be enabled for the project
+(it is by default), and the Content-Security-Policy added in Step 12 must allow the project's `wss://` address.
