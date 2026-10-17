@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { SignInForm } from "@/components/auth/SignInForm";
+import { LegalLinks } from "@/components/LegalLinks";
 import { Logo } from "@/components/Logo";
 import { getUser } from "@/lib/auth/dal";
 import { safeNext } from "@/lib/routes";
@@ -23,6 +24,7 @@ export default async function SignInPage({ searchParams }: PageProps<"/sign-in">
       <p className="mt-6 text-sm text-muted">
         Only students with a Claremont Colleges email can sign in. CampusRide never asks for a password.
       </p>
+      <LegalLinks className="mt-2" />
     </main>
   );
 }

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { BoardPage } from "@/components/board/BoardPage";
+import { Toast } from "@/components/Toast";
 import { LandingPage } from "@/components/landing/LandingPage";
 import { getMyProfile, getUser } from "@/lib/auth/dal";
 import { parseFilters } from "@/lib/data/filters";
@@ -16,5 +17,11 @@ export default async function Home({ searchParams }: PageProps<"/">) {
     const params = await searchParams;
     return <BoardPage filters={parseFilters(params)} signedIn={Boolean(user)} forceError={demoForcesError(params.fail)} />;
   }
-  return <LandingPage />;
+  const params = await searchParams;
+  return (
+    <>
+      <LandingPage />
+      {params.deleted === "1" && <Toast message="Your account was deleted." />}
+    </>
+  );
 }

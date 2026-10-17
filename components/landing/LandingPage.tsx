@@ -1,5 +1,6 @@
 import { TripCard } from "@/components/board/TripCard";
 import { Eyebrow } from "@/components/Eyebrow";
+import { LegalLinks } from "@/components/LegalLinks";
 import { Logo } from "@/components/Logo";
 import { demoTrips } from "@/lib/data/mock";
 
@@ -373,6 +374,7 @@ export function LandingPage() {
 
       <footer className="mx-auto flex max-w-[1280px] flex-col gap-5 px-4 py-[30px] sm:px-[25px] md:flex-row md:items-center md:justify-between lg:px-12">
         <Logo />
+        <LegalLinks />
         <p className="t-small text-muted">
           © 2026 CampusRide.
         </p>

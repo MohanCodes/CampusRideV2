@@ -1,4 +1,4 @@
-import type { AdminPoint, AdminReportDetail, AdminReportRow, AuditRow, ChatMessage, ChatThread, Conversation, IncomingRequest, OfferCardData, Person, PublicProfile, RequestDetail, RequestCardData, RideRow, TripCardData, TripDetail, TripState } from "./types";
+import type { AdminPoint, AdminReportDetail, AdminReportRow, AuditRow, ChatMessage, ChatThread, Conversation, IncomingRequest, OfferCardData, Person, PublicProfile, RequestDetail, RequestCardData, RideRow, TripCardData, TripDetail, TripState, MySettings } from "./types";
 
 // Sample data for demo mode. It mirrors supabase/seed_dev.sql (the same people, places and
 // timing), but none of it is real. Times are relative to `now` so the board always looks current.
@@ -190,7 +190,7 @@ export function demoConversation(id: string, now: Date): Conversation | null {
   return null;
 }
 
-const DEMO_ME_PERSON: Person = { id: DEMO_ME, firstName: "Riley", campusId: "hmc", classYear: 2027, avatarUrl: null };
+export const DEMO_ME_PERSON: Person = { id: DEMO_ME, firstName: "Riley", campusId: "hmc", classYear: 2027, avatarUrl: null };
 
 export function demoThreads(now: Date): ChatThread[] {
   return ["c1", "c2", "c3"].map((id) => {
@@ -330,4 +330,17 @@ export function demoAuditLog(now: Date): AuditRow[] {
     { id: 2, createdAt: at(52), actorFirstName: "Admin", action: "report_dismissed", target: "a5", details: {} },
     { id: 1, createdAt: at(70), actorFirstName: "Admin", action: "add_meetup_point", target: "p4", details: { name: "Smith Campus Center", campus: "pomona" } },
   ];
+}
+
+// Settings -------------------------------------------------------------------------------------------------------
+export function demoSettings(): MySettings {
+  return {
+    person: DEMO_ME_PERSON,
+    lastName: "Sample",
+    bio: "Sample profile for the viewer.",
+    prefs: { requests: true, messages: true, reminders: true },
+    blocked: [{ id: "d4", firstName: "Jordan", campusId: "cmc" }],
+    safetyPhone: "909-607-2000",
+    campusName: "Harvey Mudd College",
+  };
 }

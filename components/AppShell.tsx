@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { BottomNav, DesktopNav, type NavItem } from "@/components/NavLinks";
 import { Logo } from "@/components/Logo";
+import { LegalLinks } from "@/components/LegalLinks";
 import { SafetyNotice } from "@/components/SafetyNotice";
 import { signOut } from "@/lib/auth/actions";
 import { isAdmin } from "@/lib/auth/dal";
@@ -63,6 +64,7 @@ export async function AppShell({
         <div className="max-w-[60ch]">
           <SafetyNotice />
         </div>
+        <LegalLinks className="mt-2" />
       </footer>
       {bottomNav && <BottomNav items={items} />}
     </>

@@ -17,8 +17,8 @@ export default defineConfig({
   fullyParallel: true,
   reporter: process.env.CI ? "github" : "list",
   projects: [
-    ...looks.map((l) => ({ name: `app-${l.name}`, testMatch: /(landing|auth)\.spec\.ts/, use: { ...l.use, baseURL: APP } })),
-    ...looks.map((l) => ({ name: `demo-${l.name}`, testMatch: /(board|trip|post|seats|chat|request|safety)\.spec\.ts/, use: { ...l.use, baseURL: DEMO } })),
+    ...looks.map((l) => ({ name: `app-${l.name}`, testMatch: /(landing|auth|legal)\.spec\.ts/, use: { ...l.use, baseURL: APP } })),
+    ...looks.map((l) => ({ name: `demo-${l.name}`, testMatch: /(board|trip|post|seats|chat|request|safety|account)\.spec\.ts/, use: { ...l.use, baseURL: DEMO } })),
   ],
   webServer: process.env.E2E_BASE_URL
     ? undefined

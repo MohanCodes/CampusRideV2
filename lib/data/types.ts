@@ -221,3 +221,15 @@ export type AdminPoint = {
 };
 
 export type AuditRow = { id: number; createdAt: string; actorFirstName: string | null; action: string; target: string | null; details: Record<string, unknown> | null };
+
+// Settings (the /me page).
+export type BlockedPerson = { id: string; firstName: string; campusId: string };
+export type MySettings = {
+  person: Person;
+  lastName: string;
+  bio: string | null;
+  prefs: { requests: boolean; messages: boolean; reminders: boolean };
+  blocked: BlockedPerson[];
+  safetyPhone: string | null;
+  campusName: string;
+};

@@ -132,11 +132,11 @@ test.describe("board", () => {
     );
   });
 
-  test("does not link to parts of the app that are not built yet", async ({ page }) => {
+  test("every internal link in the navigation and footer goes to a page that exists", async ({ page, request }) => {
     await page.goto("/");
-    for (const href of ["/me", "/safety"]) {
-      await expect(page.locator(`a[href="${href}"]`)).toHaveCount(0);
-    }
+    const hrefs = await page.locator("nav a[href^='/'], footer a[href^='/']").evaluateAll((as) => [...new Set(as.map((a) => (a as HTMLAnchorElement).getAttribute("href")!))]);
+    expect(hrefs).toEqual(expect.arrayContaining(["/me", "/safety"]));
+    for (const href of hrefs) expect((await request.get(href)).status(), href).toBe(200);
   });
 });
 

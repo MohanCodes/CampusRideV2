@@ -428,3 +428,9 @@ enabled = true
 [functions.send-emails]
 enabled = true
 verify_jwt = false
+
+# Called by the signed-in person right after request_account_deletion(). The token is checked twice: by the
+# platform (verify_jwt) and again against Auth to learn who is calling.
+[functions.delete-account]
+enabled = true
+verify_jwt = true

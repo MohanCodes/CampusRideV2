@@ -75,3 +75,18 @@ Email footers link to `/me` (notification settings) and `/safety`; those pages a
   email pipeline from Step 9 (Vault secrets, Resend) to deliver anything.
 - **Removing an account** clears the profile and cancels what's ahead through `deactivate_account`. Deleting the person's
   sign-in and avatar file needs the `delete-account` Edge Function, which comes in Step 11.
+
+## Step 11: Safety, legal pages, deleting an account
+
+- **Terms and Privacy text.** Both pages say the text is pending. Counsel has to provide it (`WEB_FLOWS.md` Section 10). The
+  Privacy page lists what the app does today; that list is not the policy.
+- **Campus safety numbers.** The Safety page shows the signed-in person's college number from `campuses.safety_phone`. Only
+  Harvey Mudd's is filled in; the others say "we don't have it yet" until you confirm them.
+- **Deploy the `delete-account` Edge Function** to each hosted project (`supabase functions deploy delete-account`). It keeps
+  `verify_jwt = true` and needs no secrets beyond the two Supabase provides. Until it is deployed, Delete account closes the
+  account (name, bio and photo reference cleared, upcoming trips cancelled) but cannot remove the sign-in or photo file, and
+  says so; trying again finishes it once the function exists.
+- **Migration 23 drops the link from `profiles` to `auth.users`** so deleting the sign-in leaves the empty profile row that old
+  trips and reports point at ("Deleted user"). The sign-up trigger still creates the row.
+- **Profile editing** is not in the spec (Settings lists notification emails, blocked users, privacy, help, Sign out, Delete
+  account), so there is no edit-profile screen. Say if you want one.
