@@ -7,16 +7,22 @@ begin;
 select plan(76);
 
 -- Setup, as the database owner --------------------------------------------------------------------
-insert into auth.users (id) values
-  ('00000000-0000-0000-0000-0000000000a1'), ('00000000-0000-0000-0000-0000000000a2'), ('00000000-0000-0000-0000-0000000000a3'), ('00000000-0000-0000-0000-0000000000a4'), ('00000000-0000-0000-0000-0000000000a5'), ('00000000-0000-0000-0000-0000000000a6'), ('00000000-0000-0000-0000-0000000000a7');
-insert into profiles (id, campus_id, first_name, last_name, bio, onboarded_at, role) values
-  ('00000000-0000-0000-0000-0000000000a1', 'hmc', 'Maya',  'Lopez',  'driver bio', now(), 'student'),
-  ('00000000-0000-0000-0000-0000000000a2', 'hmc', 'Alex',  'Reed',   null,         now(), 'student'),
-  ('00000000-0000-0000-0000-0000000000a3', 'hmc', 'Casey', 'Nguyen', null,         now(), 'student'),
-  ('00000000-0000-0000-0000-0000000000a4', 'hmc', 'Eli',   'Park',   null,         now(), 'student'),
-  ('00000000-0000-0000-0000-0000000000a5', 'hmc', 'Xan',   'Admin',  null,         now(), 'admin'),
-  ('00000000-0000-0000-0000-0000000000a6', 'hmc', 'Lee',   'Stone',  null,         now(), 'student'),
-  ('00000000-0000-0000-0000-0000000000a7', 'hmc', 'Finn',  'Gray',   null,         now(), 'student');
+-- Creating an auth user also creates the profile row (trigger from Step 3); fill in the rest.
+insert into auth.users (id, email) values
+  ('00000000-0000-0000-0000-0000000000a1', 'maya@hmc.edu'), ('00000000-0000-0000-0000-0000000000a2', 'alex@hmc.edu'), ('00000000-0000-0000-0000-0000000000a3', 'casey@hmc.edu'), ('00000000-0000-0000-0000-0000000000a4', 'eli@hmc.edu'),
+  ('00000000-0000-0000-0000-0000000000a5', 'xan@hmc.edu'), ('00000000-0000-0000-0000-0000000000a6', 'lee@hmc.edu'), ('00000000-0000-0000-0000-0000000000a7', 'finn@hmc.edu');
+update profiles p
+   set first_name = v.f, last_name = v.l, bio = v.b, onboarded_at = now(), role = v.r::user_role
+  from (values
+    ('00000000-0000-0000-0000-0000000000a1', 'Maya',  'Lopez',  'driver bio', 'student'),
+    ('00000000-0000-0000-0000-0000000000a2', 'Alex',  'Reed',   null,         'student'),
+    ('00000000-0000-0000-0000-0000000000a3', 'Casey', 'Nguyen', null,         'student'),
+    ('00000000-0000-0000-0000-0000000000a4', 'Eli',   'Park',   null,         'student'),
+    ('00000000-0000-0000-0000-0000000000a5', 'Xan',   'Admin',  null,         'admin'),
+    ('00000000-0000-0000-0000-0000000000a6', 'Lee',   'Stone',  null,         'student'),
+    ('00000000-0000-0000-0000-0000000000a7', 'Finn',  'Gray',   null,         'student')
+  ) as v(id, f, l, b, r)
+ where p.id = v.id::uuid;
 
 -- Test-only coordinates. Real meetup points are not seeded yet (see supabase/PENDING.md).
 insert into meetup_points (id, campus_id, name, type, lat, lng, status) values

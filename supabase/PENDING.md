@@ -25,3 +25,15 @@ Claremont McKenna and Pitzer until each is confirmed.
 ## Email domains
 
 All seven domains in `seed.sql` still need confirming with each college's IT office.
+
+## Auth settings only the Supabase dashboard can change (staging and production)
+
+`supabase/config.toml` covers local development. For each hosted project, someone with access must:
+
+- Turn on the **Before User Created** hook and point it at `public.hook_restrict_signup_domain`.
+- Switch off password sign-in and every social provider (email one-time code only).
+- Set the email code to 6 digits, valid 10 minutes, and the code request limit to 5 per hour per email.
+  (Local config sets 6 digits, 10 minutes, and 30 seconds between codes; there is no per-hour,
+  per-email setting in the local file.)
+- Use `supabase/templates/code.html` for both the "Confirm signup" and "Magic link" emails.
+- Set SMTP to Resend once the sending domain is verified (SPF, DKIM, DMARC).

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { THEME_COLOR_DARK, THEME_COLOR_LIGHT } from "@/lib/theme";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           Skip to content
         </a>
+        <OfflineBanner />
         {children}
       </body>
     </html>

@@ -215,3 +215,75 @@
     box-shadow: none;
   }
 }
+
+/* Form pieces shared by every screen. */
+@layer components {
+  /* Inputs use Muted for the outline: Line is a decorative hairline and is too faint (under 3:1)
+     to mark where a field is. */
+  .field {
+    display: block;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 14px;
+    border: 1px solid var(--muted);
+    border-radius: 7px;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    line-height: 1.4;
+  }
+  .field[aria-invalid="true"] {
+    border-color: var(--danger);
+  }
+  .field-error {
+    margin-top: 6px;
+    color: var(--danger);
+    font-size: 0.875rem;
+    line-height: 1.4;
+  }
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px 18px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: transparent;
+    color: var(--ink);
+    font-size: 0.875rem;
+    transition: background-color 160ms ease-out;
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--pale);
+  }
+  .btn-primary:disabled,
+  .btn-secondary:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  .link {
+    color: var(--green);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+  }
+}
+
+/* A wrong code shakes the boxes. With reduced motion the border and message carry it instead. */
+@media (prefers-reduced-motion: no-preference) {
+  .shake {
+    animation: shake 280ms ease-out;
+  }
+  @keyframes shake {
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+}

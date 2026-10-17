@@ -28,14 +28,11 @@ select ok(not contains_contact_info('Trader Joe''s and Target, 3 seats open'), '
 select is(contains_contact_info(null), false,                          'treats null as clean');
 
 -- Constraints, using throwaway rows --------------------------------------------------------------
-insert into auth.users (id) values
-  ('00000000-0000-0000-0000-0000000000a1'),
-  ('00000000-0000-0000-0000-0000000000a2'),
-  ('00000000-0000-0000-0000-0000000000a3');
-insert into profiles (id, campus_id, first_name) values
-  ('00000000-0000-0000-0000-0000000000a1', 'hmc', 'Maya'),
-  ('00000000-0000-0000-0000-0000000000a2', 'hmc', 'Alex'),
-  ('00000000-0000-0000-0000-0000000000a3', 'hmc', 'Sam');
+-- Creating an auth user also creates the profile row (trigger from Step 3).
+insert into auth.users (id, email) values
+  ('00000000-0000-0000-0000-0000000000a1', 'maya@hmc.edu'),
+  ('00000000-0000-0000-0000-0000000000a2', 'alex@hmc.edu'),
+  ('00000000-0000-0000-0000-0000000000a3', 'sam@hmc.edu');
 -- Test-only coordinates. Real meetup points are not seeded yet (see supabase/PENDING.md).
 insert into meetup_points (id, campus_id, name, type, lat, lng) values
   ('00000000-0000-0000-0000-0000000000b1', 'hmc', 'Test point', 'hub', 0, 0);
