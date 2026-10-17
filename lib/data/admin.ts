@@ -93,3 +93,16 @@ export async function getAuditLog(): Promise<Result<AuditRow[]>> {
     return { ok: false };
   }
 }
+
+// Emails that were due more than 15 minutes ago and still haven't gone out (BUILD.md Section 13). 0 when all is well, and when it can't be read.
+export async function getEmailBacklog(): Promise<number> {
+  if (isDemo()) return Number(process.env.CAMPUS_RIDE_DEMO_BACKLOG ?? 0) || 0;
+  try {
+    const supabase = await createClient();
+    if (!supabase) return 0;
+    const { data, error } = await supabase.rpc("admin_email_backlog");
+    return error ? 0 : Number(data) || 0;
+  } catch {
+    return 0;
+  }
+}

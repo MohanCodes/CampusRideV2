@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { connection } from "next/server";
 import { THEME_COLOR_DARK, THEME_COLOR_LIGHT } from "@/lib/theme";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import "./globals.css";
@@ -16,7 +17,10 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Every page is built per request. The Content-Security-Policy carries a fresh nonce for each response, and a page
+  // prepared ahead of time could not have it.
+  await connection();
   return (
     <html lang="en">
       <body className="min-h-screen">

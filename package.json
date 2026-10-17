@@ -17,6 +17,7 @@
     "db:test:local": "node scripts/db/run-local.mjs"
   },
   "dependencies": {
+    "@sentry/nextjs": "^11.8.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.118.0",
     "mapbox-gl": "^3.33.0",

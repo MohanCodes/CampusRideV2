@@ -90,3 +90,11 @@ Email footers link to `/me` (notification settings) and `/safety`; those pages a
   trips and reports point at ("Deleted user"). The sign-up trigger still creates the row.
 - **Profile editing** is not in the spec (Settings lists notification emails, blocked users, privacy, help, Sign out, Delete
   account), so there is no edit-profile screen. Say if you want one.
+
+## Step 12: hardening
+
+- **Sentry:** create a project and set `SENTRY_DSN` in Vercel (staging and production). Nothing is sent without it.
+- **Mapbox under the Content-Security-Policy:** add the token, open a trip with the meetup map, and check the browser console
+  for blocked requests. See `docs/SECURITY_CHECKLIST.md`.
+- **Uptime monitor** on `/api/health`, **Supabase backups with point-in-time recovery**, a rehearsed restore on staging, and
+  the Mapbox token's URL restriction: all in `docs/SECURITY_CHECKLIST.md` under "Operations".

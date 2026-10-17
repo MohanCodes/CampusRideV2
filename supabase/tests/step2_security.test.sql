@@ -70,8 +70,8 @@ select is((select array_agg(c.relname::text order by c.relname)
            from pg_class c join pg_namespace n on n.oid = c.relnamespace
            where n.nspname = 'public' and c.relkind = 'r'
              and not exists (select 1 from pg_policies p where p.schemaname = 'public' and p.tablename = c.relname)),
-          array['email_outbox', 'rate_events'],
-          'only the service-role-only tables have no policy');
+          null::text[],
+          'every table has a policy (the two function-only tables have a deny-everyone one, added in Step 12)');
 select ok(not exists (select 1 from information_schema.columns
                       where table_schema = 'public' and table_name = 'public_profiles'
                         and column_name in ('last_name', 'email', 'role', 'suspended_until')),

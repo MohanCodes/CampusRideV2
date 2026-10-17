@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/AppShell";
+import { getEmailBacklog } from "@/lib/data/admin";
 import { isDemo } from "@/lib/demo";
 
 const TABS = [
@@ -10,9 +11,16 @@ const TABS = [
 ];
 
 // The frame around admin pages. Reaching it already required the admin role; this just adds the section title and tabs.
-export function AdminShell({ current, children }: { current: string; children: ReactNode }) {
+export async function AdminShell({ current, children }: { current: string; children: ReactNode }) {
+  const backlog = await getEmailBacklog();
   return (
     <AppShell signedIn demo={isDemo()}>
+      {backlog > 0 && (
+        <p role="alert" className="card mt-4 p-4 text-sm" data-testid="email-backlog">
+          {backlog} {backlog === 1 ? "email has" : "emails have"} been waiting more than 15 minutes. Check that the email function and its
+          secrets are set up (see supabase/PENDING.md).
+        </p>
+      )}
       <p className="t-label mt-2 text-muted">Admin</p>
       <nav aria-label="Admin sections" className="mb-8 mt-2 border-b border-line">
         <ul className="flex flex-wrap gap-6">
