@@ -28,6 +28,11 @@ describe("errorMessage", () => {
       expect(errorMessage(code)).not.toContain("!");
     }
   });
+  it("covers the trip-posting codes", () => {
+    expect(errorMessage("trip_too_far")).toBe("Pick a time within the next 60 days.");
+    expect(errorMessage("contact_info")).toBe("Keep contact details in the app chat.");
+    expect(errorMessage("invalid_trip")).toContain("Check the trip details");
+  });
   it("exposes the code", () => {
     expect(errorCode({ message: "overlap" })).toBe("overlap");
     expect(errorCode({ message: "nope" })).toBeNull();

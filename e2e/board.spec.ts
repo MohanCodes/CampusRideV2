@@ -131,7 +131,7 @@ test.describe("board", () => {
 
   test("does not link to parts of the app that are not built yet", async ({ page }) => {
     await page.goto("/");
-    for (const href of ["/post", "/rides", "/inbox", "/me", "/safety"]) {
+    for (const href of ["/rides", "/inbox", "/me", "/safety"]) {
       await expect(page.locator(`a[href="${href}"]`)).toHaveCount(0);
     }
   });
@@ -156,7 +156,7 @@ test.describe("trip detail", () => {
     // The driver shows inline on phones and in the sidebar on desktop; either way one copy is visible.
     await expect(page.getByText("Maya", { exact: true }).and(page.locator(":visible"))).toHaveCount(1);
     await expect(page.getByText("Verified").and(page.locator(":visible"))).toHaveCount(1);
-    await expect(page.getByRole("link", { name: "Board" })).toBeVisible();
+    await expect(page.getByRole("main").getByRole("link", { name: "Board" })).toBeVisible();
   });
 
   for (const view of ["none", "pending", "declined", "unavailable"] as const) {

@@ -5,7 +5,7 @@ import { SafetyNotice } from "@/components/SafetyNotice";
 import { StatusBadge } from "@/components/StatusBadge";
 import { UserRow } from "@/components/UserRow";
 import { CopyTripDetails } from "@/components/trip/CopyTripDetails";
-import { MeetupPointMap } from "@/components/trip/MeetupPointMap";
+import { MeetupMap } from "@/components/map/MeetupMap";
 import type { TripDetail } from "@/lib/data/types";
 import { FEATURES } from "@/lib/features";
 import { formatBackBy, formatDeparture } from "@/lib/format/time";
@@ -17,7 +17,7 @@ export function TripDetailView({ trip, now, signedIn, demo }: { trip: TripDetail
   const findAnother = `/?chip=${encodeURIComponent(trip.chip)}`;
 
   return (
-    <AppShell signedIn={signedIn} demo={demo}>
+    <AppShell signedIn={signedIn} demo={demo} hideBottomNav>
       <Link href="/" className="mt-2 inline-flex min-h-[44px] items-center gap-1 text-sm">
         <Icon name="back" size={16} />
         Board
@@ -28,7 +28,15 @@ export function TripDetailView({ trip, now, signedIn, demo }: { trip: TripDetail
           <h1 className="t-h1 text-[2.4rem] md:text-[3rem]">{trip.destinationName}</h1>
 
           <div className="mt-6">
-            <MeetupPointMap name={trip.meetupPoint?.name ?? "Meetup point"} />
+            <MeetupMap
+              fallbackName={trip.meetupPoint?.name ?? "Meetup point"}
+              height={200}
+              points={
+                trip.meetupPoint && trip.meetupPoint.lat != null && trip.meetupPoint.lng != null
+                  ? [{ id: trip.id, name: trip.meetupPoint.name, lat: trip.meetupPoint.lat, lng: trip.meetupPoint.lng }]
+                  : []
+              }
+            />
           </div>
 
           <dl className="mt-6 divide-y divide-line border-y border-line">

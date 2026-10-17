@@ -12,11 +12,13 @@
     "e2e": "playwright test",
     "db:reset": "supabase db reset",
     "db:test": "supabase test db",
-    "audit:prod": "npm audit --omit=dev --audit-level=high"
+    "audit:prod": "npm audit --omit=dev --audit-level=high",
+    "check": "npm run lint && npm run typecheck && npm test && npm run audit:prod && npm run e2e"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.118.0",
+    "mapbox-gl": "^3.33.0",
     "next": "16.4.2",
     "react": "19.3.0",
     "react-dom": "19.3.0",

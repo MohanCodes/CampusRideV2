@@ -226,3 +226,36 @@ export async function getTripDetail(id: string, demoView?: DemoView): Promise<Re
     return { ok: false };
   }
 }
+
+// One trip as a board card, for the "your trip is posted" page.
+export async function getTripCard(id: string): Promise<Result<TripCardData | null>> {
+  const now = getNow();
+  if (isDemo()) return { ok: true, data: demoTrips(now).find((t) => t.id === id) ?? null };
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return { ok: true, data: null };
+  try {
+    const supabase = await createClient();
+    const user = await getUser();
+    if (!supabase) return { ok: false };
+    const { data, error } = await supabase.from("board_trips").select("*").eq("id", id).maybeSingle();
+    if (error) return { ok: false };
+    if (!data) return { ok: true, data: null };
+    const r = data as BoardTripRow;
+    const urls = await avatarUrls(supabase, [r.driver_avatar_path]);
+    return {
+      ok: true,
+      data: {
+        id: r.id, destinationName: r.destination_name, chip: r.chip, departsAt: r.departs_at, backBy: r.back_by,
+        seatsLeft: r.seats_left, seatsTotal: r.seats_total, meetupPointName: r.meetup_point_name ?? "Meetup point",
+        costNote: r.cost_note,
+        driver: {
+          id: r.driver_id, firstName: r.driver_first_name, campusId: r.driver_campus_id, classYear: r.driver_class_year,
+          avatarUrl: r.driver_avatar_path ? (urls.get(r.driver_avatar_path) ?? null) : null,
+        },
+        isOwn: r.driver_id === user?.id,
+        myStatus: null,
+      },
+    };
+  } catch {
+    return { ok: false };
+  }
+}

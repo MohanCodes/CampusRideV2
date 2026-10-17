@@ -1,7 +1,7 @@
 // Which parts of the app exist yet. Links and buttons to a part that isn't built are left out,
 // not shown as dead ends. Each build step flips its flag.
 export const FEATURES = {
-  post: false,       // Step 5
+  post: true,        // Step 5: offering a ride
   requestSeat: false, // Step 6
   myRides: false,    // Step 6
   inbox: false,      // Step 6
