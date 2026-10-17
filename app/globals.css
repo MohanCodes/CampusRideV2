@@ -287,3 +287,53 @@
     80% { transform: translateX(4px); }
   }
 }
+
+/* Whole-card links: the heading link stretches over the card, and the focus ring goes around the card. */
+@layer components {
+  .stretched::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+  .stretched:focus-visible {
+    outline: none;
+  }
+  .stretched:focus-visible::after {
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
+  }
+  .skeleton {
+    background: var(--pale);
+    border-radius: 7px;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 0 16px;
+    border: 1px solid var(--line);
+    border-radius: 9999px;
+    background: var(--surface);
+    font-size: 0.875rem;
+    white-space: nowrap;
+    transition: background-color 160ms ease-out;
+  }
+  .chip:hover {
+    background: var(--pale);
+  }
+  .chip[aria-current="true"] {
+    background: var(--mint);
+    border-color: var(--green);
+    font-weight: 700;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .skeleton {
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    50% { opacity: 0.55; }
+  }
+}

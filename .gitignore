@@ -47,3 +47,6 @@ next-env.d.ts
 /test-results/
 /playwright-report/
 /blob-report/
+
+# second build used by the browser tests
+/.next-demo/

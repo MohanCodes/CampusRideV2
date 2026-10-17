@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { isDemo } from "@/lib/demo";
 import { isProtectedPath, signInUrl } from "@/lib/routes";
 import { updateSession } from "@/lib/supabase/proxy";
 
@@ -7,7 +8,9 @@ import { updateSession } from "@/lib/supabase/proxy";
 export async function proxy(request: NextRequest) {
   const { response, signedIn } = await updateSession(request);
   const { pathname, search } = request.nextUrl;
-  if (!signedIn && isProtectedPath(pathname)) {
+  // Demo mode (sample data, no backend) also opens trip pages so the screens can be reviewed.
+  const demoOpen = isDemo() && pathname.startsWith("/trip/");
+  if (!signedIn && !demoOpen && isProtectedPath(pathname)) {
     return NextResponse.redirect(new URL(signInUrl(pathname, search), request.url));
   }
   return response;

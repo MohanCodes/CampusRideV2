@@ -29,3 +29,12 @@ test("every interactive element shows a focus ring", async ({ page }) => {
   });
   expect(outline).toEqual({ width: "3px", style: "solid" });
 });
+
+test("the landing page shows sample trips that are not links", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "A look at the board." })).toBeVisible();
+  const cards = page.getByTestId("trip-card");
+  await expect(cards).toHaveCount(3);
+  await expect(cards.first().getByRole("link")).toHaveCount(0);
+  await expect(page.getByText("These are examples, not real trips.")).toBeVisible();
+});
