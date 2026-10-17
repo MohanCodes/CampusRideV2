@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      # Production dependencies only. Known dev-only advisories in the ESLint chain are tracked separately.
+      - run: npm run audit:prod
+      - run: npx playwright install --with-deps chromium
+      # Builds the app, serves it, and runs the browser specs at 360 px and desktop, Light and Dark.
+      - run: npm run e2e
+
+  db:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: supabase start
+      # Proves the migrations and seed load from nothing.
+      - run: supabase db reset
+      # pgTAP tests are added in Step 2: `supabase test db`.

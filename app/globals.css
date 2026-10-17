@@ -1,0 +1,217 @@
+@import "tailwindcss";
+
+/* Design tokens: WEB_FLOWS.md Section 7. Never hard-code a color in a component. */
+:root {
+  color-scheme: light dark;
+
+  --ink: #17392e;
+  --on-ink: #ffffff;
+  --green: #276e50;
+  --mint: #ddf9ea;
+  --pale: #eaf9f1;
+  --bg: #fcfdf9;
+  --bg-alt: #f0f4ee;
+  --surface: #ffffff;
+  --muted: #5d7168;
+  --line: #cedcd3;
+  --focus: #36805b;
+  --danger: #b42318;
+  --star: #f59e0b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ink: #eaf5ee;
+    --on-ink: #17392e;
+    --green: #6fcb9f;
+    --mint: #1d3a2e;
+    --pale: #172a21;
+    --bg: #0f1a15;
+    --bg-alt: #15231c;
+    --surface: #172620;
+    --muted: #9db3a7;
+    --line: #2a3d34;
+    --focus: #6fcb9f;
+    --danger: #f87171;
+    --star: #fbbf24;
+  }
+}
+
+/* Same values as above, for forcing Dark with data-theme="dark". */
+:root[data-theme="dark"] {
+  --ink: #eaf5ee;
+  --on-ink: #17392e;
+  --green: #6fcb9f;
+  --mint: #1d3a2e;
+  --pale: #172a21;
+  --bg: #0f1a15;
+  --bg-alt: #15231c;
+  --surface: #172620;
+  --muted: #9db3a7;
+  --line: #2a3d34;
+  --focus: #6fcb9f;
+  --danger: #f87171;
+  --star: #fbbf24;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-on-ink: var(--on-ink);
+  --color-green: var(--green);
+  --color-mint: var(--mint);
+  --color-pale: var(--pale);
+  --color-bg: var(--bg);
+  --color-bg-alt: var(--bg-alt);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-focus: var(--focus);
+  --color-danger: var(--danger);
+  --color-star: var(--star);
+
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-serif: Georgia, serif;
+}
+
+@layer base {
+  html {
+    background: var(--bg);
+    scroll-padding-top: 100px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1rem;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  /* Focus ring on every interactive element: 3 px Focus outline, 6 px offset. */
+  :focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 6px;
+  }
+}
+
+/* Reduced motion: swap movement for a quick fade. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Type scale: WEB_FLOWS.md Section 7. Sizes are rem so they scale with the user's setting. */
+@layer components {
+  .t-display {
+    font-size: clamp(3.6rem, 6.4vw, 5.5rem);
+    font-weight: 500;
+    line-height: 1.01;
+    letter-spacing: -0.06em;
+  }
+  .t-h1 {
+    font-size: 3rem;
+    font-weight: 500;
+    line-height: 1.08;
+    letter-spacing: -0.04em;
+  }
+  .t-h2 {
+    font-size: 1.44rem;
+    font-weight: 500;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+  }
+  .t-small {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  .t-label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1.4;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* On phones, step headings down: Display about 4rem, Heading 1 about 2.4rem. */
+  @media (max-width: 650px) {
+    .t-display {
+      font-size: 4rem;
+    }
+    .t-h1 {
+      font-size: 2.4rem;
+    }
+  }
+
+  /* Filled Ink button: the one main action on a screen. Hover shifts the fill to Forest. */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 2.2rem;
+    min-height: 44px;
+    padding: 17px 23px;
+    border-radius: 7px;
+    background: var(--ink);
+    color: var(--on-ink);
+    font-size: 0.875rem;
+    line-height: 1.2;
+    transition: background-color 160ms ease-out;
+  }
+  .btn-primary:hover {
+    background: var(--green);
+  }
+
+  /* Dark Ink panel with Mint text; in Dark mode the Mint value fills the panel. */
+  .panel-ink {
+    background: var(--ink);
+    color: var(--mint);
+  }
+  .panel-ink .panel-ink-muted {
+    color: inherit;
+    opacity: 0.85;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .panel-ink {
+      background: var(--mint);
+      color: var(--ink);
+    }
+  }
+  :root[data-theme="dark"] .panel-ink {
+    background: var(--mint);
+    color: var(--ink);
+  }
+
+  /* Cards: hairline border, at most a very faint shadow in Light, none in Dark. */
+  .soft-shadow {
+    box-shadow: 0 8px 26px color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .soft-shadow {
+      box-shadow: none;
+    }
+  }
+  :root[data-theme="dark"] .soft-shadow {
+    box-shadow: none;
+  }
+}
