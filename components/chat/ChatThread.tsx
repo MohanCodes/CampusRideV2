@@ -114,7 +114,9 @@ export function ChatThread({ conversationId, initial, meId, nowIso, live, demo, 
     // A fixed-height chat: only the message list scrolls, and the composer stays below it.
     <div className="flex h-[calc(100dvh-340px)] min-h-[420px] flex-col">
       <div ref={scroller} tabIndex={0} role="region" aria-label="Conversation" className="min-h-0 flex-1 overflow-y-auto pb-2 pr-1" data-testid="scroller">
-      <ol role="log" aria-live="polite" aria-label="Messages" className="space-y-3 pb-2" data-testid="messages">
+      {/* The log role sits on a wrapper, because on the list itself it would hide the list items from assistive tech. */}
+      <div role="log" aria-live="polite" aria-label="Messages">
+      <ol className="space-y-3 pb-2" data-testid="messages">
         {messages.map((m, i) => {
           const showDay = i === 0 || dayKey(m.createdAt) !== dayKey(messages[i - 1].createdAt);
           return (
@@ -136,6 +138,7 @@ export function ChatThread({ conversationId, initial, meId, nowIso, live, demo, 
           );
         })}
       </ol>
+      </div>
       </div>
 
       {open ? (
