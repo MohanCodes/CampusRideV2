@@ -1,17 +1,21 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { Icon } from "@/components/icons";
-import { SafetyNotice } from "@/components/SafetyNotice";
 import { StatusBadge } from "@/components/StatusBadge";
 import { UserRow } from "@/components/UserRow";
+import { CancelRequestButton } from "@/components/trip/CancelRequestButton";
+import { CancelTripDialog } from "@/components/trip/CancelTripDialog";
 import { CopyTripDetails } from "@/components/trip/CopyTripDetails";
+import { RequestRow } from "@/components/trip/RequestRow";
+import { RequestSeatDialog } from "@/components/trip/RequestSeatDialog";
+import { Toast } from "@/components/Toast";
 import { MeetupMap } from "@/components/map/MeetupMap";
 import type { TripDetail } from "@/lib/data/types";
 import { FEATURES } from "@/lib/features";
 import { formatBackBy, formatDeparture } from "@/lib/format/time";
 import { seatsLeftText, tripSummary } from "@/lib/format/trip";
 
-export function TripDetailView({ trip, now, signedIn, demo }: { trip: TripDetail; now: Date; signedIn: boolean; demo: boolean }) {
+export function TripDetailView({ trip, now, signedIn, demo, sent = false }: { trip: TripDetail; now: Date; signedIn: boolean; demo: boolean; sent?: boolean }) {
   const revealed = trip.state === "accepted" || trip.state === "own";
   const when = formatDeparture(trip.departsAt, now);
   const findAnother = `/?chip=${encodeURIComponent(trip.chip)}`;
@@ -23,6 +27,7 @@ export function TripDetailView({ trip, now, signedIn, demo }: { trip: TripDetail
         Board
       </Link>
 
+      {sent && <Toast message={`Request sent. We'll let you know when ${trip.driver.firstName} replies.`} />}
       <div className="grid gap-8 pb-28 md:pb-0 lg:grid-cols-[1fr_360px]">
         <div className="min-w-0">
           <h1 className="t-h1 text-[2.4rem] md:text-[3rem]">{trip.destinationName}</h1>
@@ -89,9 +94,25 @@ export function TripDetailView({ trip, now, signedIn, demo }: { trip: TripDetail
             )}
           </dl>
 
-          <div className="mt-8">
-            <SafetyNotice />
-          </div>
+          {trip.state === "own" && trip.tripStatus === "open" && trip.requests && (
+            <section aria-labelledby="requests-heading" className="mt-8">
+              <h2 id="requests-heading" className="t-h2 mb-3">
+                Requests
+              </h2>
+              {trip.requests.length === 0 ? (
+                <p className="text-muted" data-testid="no-requests">
+                  No one has asked for a seat yet. We&apos;ll email you when someone does.
+                </p>
+              ) : (
+                <ul className="grid gap-3 md:grid-cols-2">
+                  {trip.requests.map((r) => (
+                    <RequestRow key={r.id} request={r} now={now} />
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
+
         </div>
 
         <aside aria-label="Driver and actions" className="lg:pt-[72px]">
@@ -130,28 +151,23 @@ function ActionArea({ trip, when, findAnother }: { trip: TripDetail; when: strin
   switch (trip.state) {
     case "none":
       return (
-        <div>
-          <button type="button" className="btn-primary w-full justify-between md:w-auto" disabled={!FEATURES.requestSeat}>
-            Request a seat <span aria-hidden="true">↗</span>
-          </button>
-          {!FEATURES.requestSeat && <p className="mt-2 text-sm text-muted">Seat requests aren&apos;t open yet.</p>}
-        </div>
+        <RequestSeatDialog
+          tripId={trip.id} driverFirstName={first} seatsLeft={trip.seatsLeft} costNote={trip.costNote} chip={trip.chip}
+        />
       );
     case "pending":
       return (
         <div className="space-y-3">
-          <p className="flex items-center gap-2">
+          <p className="flex flex-wrap items-center gap-2">
             {status("pending")} Request sent. We&apos;ll let you know when {first} replies.
           </p>
-          <button type="button" className="btn-secondary" disabled={!FEATURES.requestSeat}>
-            Cancel request
-          </button>
+          {trip.myRequestId && <CancelRequestButton requestId={trip.myRequestId} tripId={trip.id} />}
         </div>
       );
     case "accepted":
       return (
         <div className="space-y-3">
-          <p className="flex items-center gap-2">
+          <p className="flex flex-wrap items-center gap-2">
             {status("accepted")} {first} accepted your request.
           </p>
           <div className="flex flex-wrap items-center gap-3">
@@ -166,12 +182,13 @@ function ActionArea({ trip, when, findAnother }: { trip: TripDetail; when: strin
             />
           </div>
           {!FEATURES.chat && <p className="text-sm text-muted">Chat isn&apos;t open yet.</p>}
+          {trip.myRequestId && <CancelRequestButton requestId={trip.myRequestId} tripId={trip.id} label="Cancel my seat" />}
         </div>
       );
     case "declined":
       return (
         <div className="space-y-3">
-          <p className="flex items-center gap-2">
+          <p className="flex flex-wrap items-center gap-2">
             {status("declined")} {first} can&apos;t take you this time.
           </p>
           <Link href={findAnother} className="btn-secondary">
@@ -189,18 +206,27 @@ function ActionArea({ trip, when, findAnother }: { trip: TripDetail; when: strin
         </div>
       );
     case "own":
+      if (trip.tripStatus === "cancelled") {
+        return (
+          <div className="space-y-3">
+            <p className="flex flex-wrap items-center gap-2">
+              <StatusBadge status="cancelled" /> You cancelled this trip.
+            </p>
+            <Link href="/post/offer" className="btn-secondary">
+              Post another trip
+            </Link>
+          </div>
+        );
+      }
       return (
         <div className="space-y-3">
           <p className="text-muted">This is your trip.</p>
           <div className="flex flex-wrap gap-3">
-            <button type="button" className="btn-secondary" disabled={!FEATURES.post}>
+            <Link href={`/trip/${trip.id}/edit`} className="btn-secondary">
               Edit trip
-            </button>
-            <button type="button" className="btn-secondary" disabled={!FEATURES.requestSeat}>
-              Cancel trip
-            </button>
+            </Link>
+            <CancelTripDialog tripId={trip.id} hasRiders={(trip.requests?.length ?? 0) > 0} />
           </div>
-          <p className="text-sm text-muted">Editing, cancelling, and seat requests aren&apos;t open yet.</p>
         </div>
       );
   }

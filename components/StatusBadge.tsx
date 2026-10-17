@@ -1,10 +1,10 @@
 import { Icon } from "@/components/icons";
 
-export type Status = "open" | "full" | "pending" | "accepted" | "declined" | "past" | "cancelled";
+export type Status = "open" | "full" | "pending" | "accepted" | "declined" | "expired" | "past" | "cancelled";
 
 const LABEL: Record<Status, string> = {
   open: "Open", full: "Full", pending: "Pending", accepted: "Accepted",
-  declined: "Declined", past: "Past", cancelled: "Cancelled",
+  declined: "Declined", expired: "Expired", past: "Past", cancelled: "Cancelled",
 };
 
 // Success uses Forest with a check and a word; Danger is only for declines. Color never works alone.
@@ -14,6 +14,7 @@ const STYLE: Record<Status, string> = {
   pending: "border-line bg-pale text-ink",
   accepted: "border-green bg-mint text-green",
   declined: "border-danger text-danger",
+  expired: "border-line text-muted",
   past: "border-line text-muted",
   cancelled: "border-line text-muted",
 };

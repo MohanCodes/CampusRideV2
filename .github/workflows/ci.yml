@@ -28,10 +28,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
       - uses: supabase/setup-cli@v1
         with:
           version: latest
       - run: supabase start
       # Proves the migrations and seed load from nothing.
       - run: supabase db reset
-      # pgTAP tests are added in Step 2: `supabase test db`.
+      # pgTAP tests (supabase/tests/*.test.sql) on real Supabase.
+      - run: supabase test db
+      # Tests that need several sessions at once, such as two drivers accepting the last seat.
+      - run: node supabase/tests/race/overbooking.mjs
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      # The same SQL tests on plain PostgreSQL, which also needs no Docker locally.
+      - run: npm run db:test:local

@@ -4,7 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon, type IconName } from "@/components/icons";
 
-export type NavItem = { href: string; label: string; icon: IconName };
+export type NavItem = { href: string; label: string; icon: IconName; badge?: number };
+
+function Badge({ n }: { n?: number }) {
+  if (!n) return null;
+  return (
+    <span className="tabular ml-1 inline-grid min-w-[18px] place-items-center rounded-full bg-ink px-[5px] text-[0.6875rem] font-bold leading-[18px] text-on-ink" data-testid="nav-badge">
+      <span aria-hidden="true">{n}</span>
+      <span className="sr-only">{n} waiting</span>
+    </span>
+  );
+}
 
 const isCurrent = (pathname: string, href: string) => (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/"));
 
@@ -21,6 +31,7 @@ export function DesktopNav({ items }: { items: NavItem[] }) {
           className={`hidden min-h-[44px] content-center text-sm md:inline-grid ${isCurrent(pathname, n.href) ? "font-bold underline decoration-green decoration-2 underline-offset-8" : ""}`}
         >
           {n.label}
+          <Badge n={n.badge} />
         </Link>
       ))}
     </>
@@ -42,7 +53,10 @@ export function BottomNav({ items }: { items: NavItem[] }) {
                 aria-current={current ? "page" : undefined}
                 className={`flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-xs ${current ? "font-bold text-green" : "text-muted"}`}
               >
-                <Icon name={n.icon} size={22} />
+                <span className="inline-flex items-center">
+                  <Icon name={n.icon} size={22} />
+                  <Badge n={n.badge} />
+                </span>
                 {n.label}
               </Link>
             </li>

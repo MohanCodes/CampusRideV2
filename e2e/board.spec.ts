@@ -131,7 +131,7 @@ test.describe("board", () => {
 
   test("does not link to parts of the app that are not built yet", async ({ page }) => {
     await page.goto("/");
-    for (const href of ["/rides", "/inbox", "/me", "/safety"]) {
+    for (const href of ["/me", "/safety"]) {
       await expect(page.locator(`a[href="${href}"]`)).toHaveCount(0);
     }
   });
@@ -149,10 +149,10 @@ test.describe("trip detail", () => {
     await page.goto("/trip/t1");
     await expect(page.getByText("Today, 4:00 PM")).toBeVisible();
     await expect(page.getByText("Back by 6:00 PM")).toBeVisible();
-    await expect(page.getByText("2 seats left")).toBeVisible();
+    await expect(page.getByText("2 seats left", { exact: true })).toBeVisible();
     await expect(page.getByText("Platt Campus Center")).toBeVisible();
     await expect(page.getByText("Blue Honda Civic")).toBeVisible();
-    await expect(page.getByText("Split gas and parking")).toBeVisible();
+    await expect(page.locator("dl").getByText("Split gas and parking")).toBeVisible();
     // The driver shows inline on phones and in the sidebar on desktop; either way one copy is visible.
     await expect(page.getByText("Maya", { exact: true }).and(page.locator(":visible"))).toHaveCount(1);
     await expect(page.getByText("Verified").and(page.locator(":visible"))).toHaveCount(1);
@@ -183,8 +183,7 @@ test.describe("trip detail", () => {
   test("each state says what happened and offers one next step", async ({ page }) => {
     const action = page.getByTestId("action-area");
     await page.goto("/trip/t1?as=none");
-    await expect(action.getByRole("button", { name: /Request a seat/ })).toBeDisabled();
-    await expect(action).toContainText("Seat requests aren't open yet.");
+    await expect(action.getByRole("button", { name: /Request a seat/ })).toBeEnabled();
 
     await page.goto("/trip/t1?as=pending");
     await expect(action).toContainText("Request sent. We'll let you know when Maya replies.");
@@ -224,9 +223,10 @@ test.describe("trip detail", () => {
     expect(clip).toContain("Balch Hall");
   });
 
-  test("the safety notice is on the trip, word for word", async ({ page }) => {
+  test("the safety notice is on the trip page, word for word, once", async ({ page }) => {
     await page.goto("/trip/t1");
-    await expect(page.getByRole("main")).toContainText(
+    await expect(page.getByText("Campus Ride connects students.")).toHaveCount(1);
+    await expect(page.getByRole("contentinfo")).toContainText(
       "Campus Ride connects students. It doesn't supervise rides or run background checks. Use your judgment, and call 911 in an emergency.",
     );
   });

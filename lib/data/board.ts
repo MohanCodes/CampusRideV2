@@ -1,10 +1,12 @@
 import "server-only";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { getUser } from "@/lib/auth/dal";
 import { getNow, isDemo } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/server";
 import { applyRequestFilters, applyTripFilters } from "./apply";
 import { dateRange, type BoardFilters } from "./filters";
+import { avatarUrls } from "./avatars";
+import { loadIncoming } from "./incoming";
+import { rowToCard } from "./map";
 import { demoRequests, demoTripDetail, demoTrips, type DemoView, DEMO_VIEWS } from "./mock";
 import type { MySeatStatus, Person, RequestCardData, Result, TripCardData, TripDetail, TripState } from "./types";
 
@@ -12,19 +14,8 @@ import type { MySeatStatus, Person, RequestCardData, Result, TripCardData, TripD
 // query Supabase as the signed-in person, so row-level security decides what comes back.
 // Nothing here writes. Any failure comes back as { ok: false } so the screen can show "Try again".
 
-const AVATAR_URL_SECONDS = 3600;
-
 // Characters that mean something inside a PostgREST filter string. Search text never needs them.
 const safeSearch = (q: string) => q.replace(/[%,()*\\":]/g, " ").trim();
-
-async function avatarUrls(supabase: SupabaseClient, paths: (string | null)[]): Promise<Map<string, string>> {
-  const unique = [...new Set(paths.filter((p): p is string => Boolean(p)))];
-  const out = new Map<string, string>();
-  if (unique.length === 0) return out;
-  const { data } = await supabase.storage.from("avatars").createSignedUrls(unique, AVATAR_URL_SECONDS);
-  for (const item of data ?? []) if (item.path && item.signedUrl) out.set(item.path, item.signedUrl);
-  return out;
-}
 
 type BoardTripRow = {
   id: string; driver_id: string; destination_name: string; departs_at: string; back_by: string | null;
@@ -74,26 +65,7 @@ export async function listTrips(f: BoardFilters): Promise<Result<TripCardData[]>
     }
     const urls = await avatarUrls(supabase, rows.map((r) => r.driver_avatar_path));
 
-    return {
-      ok: true,
-      data: rows.map((r) => ({
-        id: r.id,
-        destinationName: r.destination_name,
-        chip: r.chip,
-        departsAt: r.departs_at,
-        backBy: r.back_by,
-        seatsLeft: r.seats_left,
-        seatsTotal: r.seats_total,
-        meetupPointName: r.meetup_point_name ?? "Meetup point",
-        costNote: r.cost_note,
-        driver: {
-          id: r.driver_id, firstName: r.driver_first_name, campusId: r.driver_campus_id,
-          classYear: r.driver_class_year, avatarUrl: r.driver_avatar_path ? (urls.get(r.driver_avatar_path) ?? null) : null,
-        },
-        isOwn: r.driver_id === user?.id,
-        myStatus: mine.get(r.id) ?? null,
-      })),
-    };
+    return { ok: true, data: rows.map((r) => rowToCard(r, user?.id, mine.get(r.id) ?? null, urls)) };
   } catch {
     return { ok: false };
   }
@@ -178,7 +150,7 @@ export async function getTripDetail(id: string, demoView?: DemoView): Promise<Re
       supabase.from("meetup_points").select("name, lat, lng").eq("id", trip.meetup_point_id).maybeSingle(),
       supabase.from("trip_private").select("car_plate").eq("trip_id", id).maybeSingle(),
       supabase.rpc("get_trip_meetup_detail", { p_trip: id }),
-      supabase.from("seat_requests").select("status").eq("trip_id", id).eq("rider_id", user.id).maybeSingle(),
+      supabase.from("seat_requests").select("id, status").eq("trip_id", id).eq("rider_id", user.id).maybeSingle(),
       trip.place_id ? supabase.from("places").select("chip").eq("id", trip.place_id).maybeSingle() : Promise.resolve({ data: null }),
     ]);
 
@@ -201,10 +173,26 @@ export async function getTripDetail(id: string, demoView?: DemoView): Promise<Re
     else if (mine === "declined") state = "declined";
     else state = available ? "none" : "unavailable";
 
+    // The driver also sees who asked, with their answers.
+    let requests: TripDetail["requests"] = null;
+    if (trip.driver_id === user.id) {
+      const { data: rows } = await supabase
+        .from("seat_requests").select("id, trip_id, rider_id, seats, message, status, created_at")
+        .eq("trip_id", id).in("status", ["pending", "accepted"]).order("created_at");
+      requests = await loadIncoming(supabase, rows ?? [], new Map([[id, {
+        destination_name: trip.destination_name, departs_at: trip.departs_at,
+        meetup_point_name: pointRes.data?.name ?? null, seats_left: trip.seats_total - trip.seats_taken,
+      }]]));
+    }
+
     return {
       ok: true,
       data: {
         id: trip.id,
+        tripStatus: trip.status,
+        seatsTaken: trip.seats_taken,
+        myRequestId: mineRes.data?.id ?? null,
+        requests,
         destinationName: trip.destination_name,
         departsAt: trip.departs_at,
         backBy: trip.back_by,
@@ -241,20 +229,7 @@ export async function getTripCard(id: string): Promise<Result<TripCardData | nul
     if (!data) return { ok: true, data: null };
     const r = data as BoardTripRow;
     const urls = await avatarUrls(supabase, [r.driver_avatar_path]);
-    return {
-      ok: true,
-      data: {
-        id: r.id, destinationName: r.destination_name, chip: r.chip, departsAt: r.departs_at, backBy: r.back_by,
-        seatsLeft: r.seats_left, seatsTotal: r.seats_total, meetupPointName: r.meetup_point_name ?? "Meetup point",
-        costNote: r.cost_note,
-        driver: {
-          id: r.driver_id, firstName: r.driver_first_name, campusId: r.driver_campus_id, classYear: r.driver_class_year,
-          avatarUrl: r.driver_avatar_path ? (urls.get(r.driver_avatar_path) ?? null) : null,
-        },
-        isOwn: r.driver_id === user?.id,
-        myStatus: null,
-      },
-    };
+    return { ok: true, data: rowToCard(r, user?.id, null, urls) };
   } catch {
     return { ok: false };
   }

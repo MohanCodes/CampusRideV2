@@ -28,5 +28,6 @@ export default async function TripPage({ params, searchParams }: PageProps<"/tri
     );
   }
   if (!res.data) notFound();
-  return <TripDetailView trip={res.data} now={getNow()} signedIn={signedIn} demo={demo} />;
+  const sent = (Array.isArray(sp.sent) ? sp.sent[0] : sp.sent) === "1";
+  return <TripDetailView trip={res.data} now={getNow()} signedIn={signedIn} demo={demo} sent={sent} />;
 }

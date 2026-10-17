@@ -14,7 +14,11 @@ function statusOf(t: TripCardData): Status {
 }
 
 // The card is one big link to the trip. `href={null}` makes it read-only (the sample cards on the landing page).
-export function TripCard({ trip, now, href = `/trip/${trip.id}` }: { trip: TripCardData; now: Date; href?: string | null }) {
+// `badge` overrides the status pill (My Rides passes the person's own role-aware status), `note` adds a
+// line such as "2 requests waiting", and `showDriver={false}` leaves out the driver row on the person's own trips.
+export function TripCard({
+  trip, now, href = `/trip/${trip.id}`, badge, note, showDriver = true,
+}: { trip: TripCardData; now: Date; href?: string | null; badge?: Status; note?: string; showDriver?: boolean }) {
   const title = <>{trip.destinationName}</>;
   return (
     <article data-testid="trip-card" className="card relative p-4 transition-colors hover:border-green">
@@ -28,7 +32,7 @@ export function TripCard({ trip, now, href = `/trip/${trip.id}` }: { trip: TripC
             title
           )}
         </h3>
-        <StatusBadge status={statusOf(trip)} />
+        <StatusBadge status={badge ?? statusOf(trip)} />
       </div>
       <p className="tabular mt-1 text-[1.0625rem]">{formatDeparture(trip.departsAt, now)}</p>
       <p className="mt-3 flex items-center gap-2 text-sm text-muted">
@@ -39,10 +43,13 @@ export function TripCard({ trip, now, href = `/trip/${trip.id}` }: { trip: TripC
         <Icon name="users" size={16} />
         {seatsLeftText(trip.seatsLeft)}
       </p>
-      <div className="mt-4 border-t border-line pt-4">
-        <UserRow person={trip.driver} />
-        {trip.costNote && <p className="mt-3 text-sm text-muted">{trip.costNote}</p>}
-      </div>
+      {note && <p className="mt-3 text-sm font-bold">{note}</p>}
+      {(showDriver || trip.costNote) && (
+        <div className="mt-4 border-t border-line pt-4">
+          {showDriver && <UserRow person={trip.driver} />}
+          {trip.costNote && <p className={`${showDriver ? "mt-3 " : ""}text-sm text-muted`}>{trip.costNote}</p>}
+        </div>
+      )}
     </article>
   );
 }

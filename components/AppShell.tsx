@@ -4,6 +4,7 @@ import { BottomNav, DesktopNav, type NavItem } from "@/components/NavLinks";
 import { Logo } from "@/components/Logo";
 import { SafetyNotice } from "@/components/SafetyNotice";
 import { signOut } from "@/lib/auth/actions";
+import { getInboxCount } from "@/lib/data/rides";
 import { FEATURES } from "@/lib/features";
 
 // The frame around every signed-in screen: header, navigation, and the safety notice in the footer.
@@ -18,10 +19,13 @@ const NAV: NavItem[] = [
   .filter((n) => n.ready)
   .map(({ href, label, icon }) => ({ href, label, icon }));
 
-export function AppShell({
+export async function AppShell({
   signedIn, demo = false, hideBottomNav = false, children,
 }: { signedIn: boolean; demo?: boolean; hideBottomNav?: boolean; children: ReactNode }) {
   const bottomNav = NAV.length > 1 && !hideBottomNav;
+  // The Inbox badge counts seat requests waiting for an answer.
+  const waiting = FEATURES.inbox && (signedIn || demo) ? await getInboxCount() : 0;
+  const items = NAV.map((n) => (n.href === "/inbox" ? { ...n, badge: waiting } : n));
   return (
     <>
       {demo && (
@@ -33,7 +37,7 @@ export function AppShell({
         <div className="mx-auto flex h-[78px] max-w-[1180px] items-center justify-between gap-4 px-4 sm:px-[25px] md:h-[92px]">
           <Logo />
           <nav aria-label="Main navigation" className="flex items-center gap-2 sm:gap-6">
-            {NAV.length > 1 && <DesktopNav items={NAV} />}
+            {NAV.length > 1 && <DesktopNav items={items} />}
             {signedIn ? (
               <form action={signOut}>
                 <button type="submit" className="btn-secondary">
@@ -56,7 +60,7 @@ export function AppShell({
           <SafetyNotice />
         </div>
       </footer>
-      {bottomNav && <BottomNav items={NAV} />}
+      {bottomNav && <BottomNav items={items} />}
     </>
   );
 }

@@ -8,6 +8,7 @@ const MESSAGES: Record<string, string> = {
   invalid_profile: "Check your name, class year, and photo, then try again.",
   meetup_not_allowed: "Pick an approved meetup point.",
   invalid_trip: "Check the trip details and try again.",
+  invalid_request: "Check your request and try again.",
   contact_info: "Keep contact details in the app chat.",
   trip_too_far: "Pick a time within the next 60 days.",
   time_in_past: "That time has already passed. Pick a later one.",

@@ -1,4 +1,4 @@
-import type { Person, RequestCardData, TripCardData, TripDetail, TripState } from "./types";
+import type { IncomingRequest, Person, RequestCardData, RideRow, TripCardData, TripDetail, TripState } from "./types";
 
 // Sample data for demo mode. It mirrors supabase/seed_dev.sql (the same people, places and
 // timing), but none of it is real. Times are relative to `now` so the board always looks current.
@@ -31,24 +31,57 @@ const SEEDS: TripSeed[] = [
   { id: "t7", dest: "Ontario Mills", chip: "Other", inHours: 72, backHours: null, total: 3, taken: 0, point: "Smith Campus Center", make: "Ford Escape", color: "Gray", cost: null, notes: "An \"Other\" destination.", driver: riley, status: "open", plate: "DEV1009", stand: "Stand by the fountain.", lat: 34.0975, lng: -117.711 },
   { id: "t8", dest: "Claremont Village", chip: "The Village", inHours: 53, backHours: null, total: 3, taken: 0, point: "Smith Campus Center", make: "Toyota RAV4", color: "White", cost: null, notes: null, driver: alex, status: "cancelled", plate: "DEV1007", stand: "Stand by the fountain.", lat: 34.0975, lng: -117.711 },
   { id: "t9", dest: "Target (Upland)", chip: "Target", inHours: -24, backHours: null, total: 3, taken: 1, point: "Smith Campus Center", make: "Mazda 3", color: "Red", cost: null, notes: null, driver: jordan, status: "past", plate: "DEV1008", stand: "Stand by the fountain.", lat: 34.0975, lng: -117.711 },
-  { id: "t10", dest: "Target (Montclair)", chip: "Target", inHours: 6, backHours: null, total: 3, taken: 0, point: "Platt Campus Center", make: "Kia Soul", color: "Yellow", cost: "Split gas and parking", notes: null, driver: { id: DEMO_ME, firstName: "Riley", campusId: "hmc", classYear: 2027, avatarUrl: null }, status: "open", plate: "DEV1010", stand: "Stand at the front steps.", own: true, lat: 34.106, lng: -117.709 },
+  { id: "t10", dest: "Target (Montclair)", chip: "Target", inHours: 6, backHours: null, total: 3, taken: 1, point: "Platt Campus Center", make: "Kia Soul", color: "Yellow", cost: "Split gas and parking", notes: null, driver: { id: DEMO_ME, firstName: "Riley", campusId: "hmc", classYear: 2027, avatarUrl: null }, status: "open", plate: "DEV1010", stand: "Stand at the front steps.", own: true, lat: 34.106, lng: -117.709 },
+  { id: "t11", dest: "Claremont Village", chip: "The Village", inHours: 30, backHours: null, total: 3, taken: 0, point: "Platt Campus Center", make: "Kia Soul", color: "Yellow", cost: null, notes: null, driver: { id: DEMO_ME, firstName: "Riley", campusId: "hmc", classYear: 2027, avatarUrl: null }, status: "cancelled", plate: "DEV1011", stand: "Stand at the front steps.", own: true, lat: 34.106, lng: -117.709 },
+  { id: "t12", dest: "Target (Upland)", chip: "Target", inHours: -30, backHours: null, total: 3, taken: 2, point: "Platt Campus Center", make: "Kia Soul", color: "Yellow", cost: null, notes: null, driver: { id: DEMO_ME, firstName: "Riley", campusId: "hmc", classYear: 2027, avatarUrl: null }, status: "past", plate: "DEV1012", stand: "Stand at the front steps.", own: true, lat: 34.106, lng: -117.709 },
+  { id: "t13", dest: "Trader Joe's", chip: "Trader Joe's", inHours: 60, backHours: null, total: 2, taken: 2, point: "Hoch-Shanahan Dining Commons", make: "Mazda 3", color: "Red", cost: null, notes: null, driver: jordan, status: "open", plate: "DEV1013", stand: "Stand at the main doors.", mine: "declined", lat: 34.1062, lng: -117.7092 },
 ];
 
+const cardOf = (s: TripSeed, now: Date): TripCardData => ({
+  id: s.id,
+  destinationName: s.dest,
+  chip: s.chip,
+  departsAt: iso(now, s.inHours),
+  backBy: s.backHours == null ? null : iso(now, s.backHours),
+  seatsLeft: s.total - s.taken,
+  seatsTotal: s.total,
+  meetupPointName: s.point,
+  costNote: s.cost,
+  driver: s.driver,
+  isOwn: Boolean(s.own),
+  myStatus: s.mine ?? null,
+});
+
 export function demoTrips(now: Date): TripCardData[] {
-  return SEEDS.filter((s) => s.status === "open" && s.inHours > 0 && s.taken < s.total).map((s) => ({
-    id: s.id,
-    destinationName: s.dest,
-    chip: s.chip,
-    departsAt: iso(now, s.inHours),
-    backBy: s.backHours == null ? null : iso(now, s.backHours),
-    seatsLeft: s.total - s.taken,
-    seatsTotal: s.total,
-    meetupPointName: s.point,
-    costNote: s.cost,
-    driver: s.driver,
-    isOwn: Boolean(s.own),
-    myStatus: s.mine ?? null,
-  }));
+  return SEEDS.filter((s) => s.status === "open" && s.inHours > 0 && s.taken < s.total).map((s) => cardOf(s, now));
+}
+
+// Requests on the demo viewer's own trip (t10): two waiting and one already accepted.
+export function demoOwnRequests(now: Date): IncomingRequest[] {
+  const t = SEEDS.find((x) => x.id === "t10")!;
+  const base = { tripId: t.id, tripName: t.dest, departsAt: iso(now, t.inHours), meetupPointName: t.point, seatsLeft: t.total - t.taken };
+  return [
+    { ...base, id: "q1", rider: alex, seats: 1, message: "Hi, I just need Target and back, no big bags.", status: "pending", createdAt: iso(now, -2) },
+    { ...base, id: "q2", rider: sam, seats: 2, message: null, status: "pending", createdAt: iso(now, -1) },
+    { ...base, id: "q3", rider: jordan, seats: 1, message: null, status: "accepted", createdAt: iso(now, -5) },
+  ];
+}
+
+export const demoInbox = (now: Date): IncomingRequest[] => demoOwnRequests(now).filter((r) => r.status === "pending");
+
+// My Rides for the demo viewer: three trips they drive and four they asked to ride on.
+export function demoRides(now: Date): RideRow[] {
+  const driving: RideRow[] = ["t10", "t11", "t12"].map((id) => {
+    const s = SEEDS.find((x) => x.id === id)!;
+    return { trip: cardOf(s, now), role: "driver", tripStatus: s.status, seatStatus: null, pendingRequests: id === "t10" ? 2 : 0 };
+  });
+  const riding: RideRow[] = [
+    { id: "t2", seat: "pending" }, { id: "t3", seat: "accepted" }, { id: "t13", seat: "declined" }, { id: "t9", seat: "accepted" },
+  ].map(({ id, seat }) => {
+    const s = SEEDS.find((x) => x.id === id)!;
+    return { trip: { ...cardOf(s, now), myStatus: seat as "pending" | "accepted" | "declined" }, role: "rider", tripStatus: s.status, seatStatus: seat as "pending" | "accepted" | "declined", pendingRequests: 0 };
+  });
+  return [...driving, ...riding];
 }
 
 export function demoRequests(now: Date): RequestCardData[] {
@@ -72,6 +105,10 @@ export function demoTripDetail(id: string, now: Date, view?: DemoView): TripDeta
   const reveal = state === "accepted" || state === "own";
   return {
     id: s.id,
+    tripStatus: s.status,
+    seatsTaken: s.taken,
+    myRequestId: state === "pending" || state === "accepted" ? "demo-request" : null,
+    requests: state === "own" ? demoOwnRequests(now) : null,
     destinationName: s.dest,
     departsAt: iso(now, s.inHours),
     backBy: s.backHours == null ? null : iso(now, s.backHours),
