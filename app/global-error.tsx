@@ -3,6 +3,8 @@
 import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
 import { ErrorState } from "@/components/states";
+import "@fontsource-variable/plus-jakarta-sans/wght.css";
+import "@fontsource-variable/newsreader/wght-italic.css";
 import "./globals.css";
 
 // Used only when the root layout itself fails. It has to bring its own <html> and <body>.

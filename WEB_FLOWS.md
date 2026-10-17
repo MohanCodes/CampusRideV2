@@ -279,12 +279,12 @@ The landing page has no danger color, highlight color, or dark mode, so those ro
 - Proportions: about 75% Page, Card, and Sage, 15% Ink and Muted, 8% Mint and Forest, 2% Danger and Highlight. If a screen feels busy, remove color before adding anything.
 - Every text pairing needs 4.5:1 contrast (3:1 for large text and UI outlines) in both Light and Dark. Never use color alone to carry meaning.
 
-**Type.** Arial or Helvetica for everything (system sans fallback), with Georgia for one emphasized word in a headline and for step numbers. Text sizes use `rem` so they scale.
+**Type.** Plus Jakarta Sans for everything, with Newsreader (italic) for one emphasized word in a headline and for step numbers. Both are served from the site itself (npm font packages), with Arial and Georgia as fallbacks. Text sizes use `rem` so they scale.
 
 | Style | Size / weight | Letter spacing | Use |
 | --- | --- | --- | --- |
-| Display | clamp(3.6rem, 6.4vw, 5.5rem) / 500 | -0.06em | Landing page headline only |
-| Heading 1 | 3rem / 500, line height 1.08 | -0.04em | Section headings, page titles on desktop |
+| Display | clamp(3.6rem, 6.4vw, 5.5rem) / 500 | -0.045em | Landing page headline only |
+| Heading 1 | 3rem / 500, line height 1.08 | -0.03em | Section headings, page titles on desktop |
 | Heading 2 | 1.44rem / 500 | -0.02em | Card titles, step titles, screen headings in the app |
 | Body | 1rem / 400, line height 1.65 | normal | Messages, notes, descriptions |
 | Small | 0.875rem / 400 | normal | Captions, times, seat counts |

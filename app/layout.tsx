@@ -2,6 +2,10 @@ import type { Metadata, Viewport } from "next";
 import { connection } from "next/server";
 import { THEME_COLOR_DARK, THEME_COLOR_LIGHT } from "@/lib/theme";
 import { OfflineBanner } from "@/components/OfflineBanner";
+// Fonts are served from this site (npm packages), not from Google, so the security policy needs nothing new.
+import "@fontsource-variable/plus-jakarta-sans/wght.css";
+import "@fontsource-variable/newsreader/wght.css";
+import "@fontsource-variable/newsreader/wght-italic.css";
 import "./globals.css";
 
 export const metadata: Metadata = {

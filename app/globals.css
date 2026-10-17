@@ -69,8 +69,8 @@
   --color-danger: var(--danger);
   --color-star: var(--star);
 
-  --font-sans: Arial, Helvetica, sans-serif;
-  --font-serif: Georgia, serif;
+  --font-sans: "Plus Jakarta Sans Variable", Arial, Helvetica, sans-serif;
+  --font-serif: "Newsreader Variable", Georgia, serif;
 }
 
 @layer base {
@@ -89,7 +89,7 @@
     margin: 0;
     background: var(--bg);
     color: var(--ink);
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: var(--font-sans);
     font-size: 1rem;
     line-height: 1.65;
     -webkit-font-smoothing: antialiased;
@@ -125,13 +125,13 @@
     font-size: clamp(3.6rem, 6.4vw, 5.5rem);
     font-weight: 500;
     line-height: 1.01;
-    letter-spacing: -0.06em;
+    letter-spacing: -0.045em;
   }
   .t-h1 {
     font-size: 3rem;
     font-weight: 500;
     line-height: 1.08;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.03em;
   }
   .t-h2 {
     font-size: 1.44rem;
