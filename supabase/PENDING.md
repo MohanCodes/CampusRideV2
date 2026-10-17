@@ -98,3 +98,10 @@ Email footers link to `/me` (notification settings) and `/safety`; those pages a
   for blocked requests. See `docs/SECURITY_CHECKLIST.md`.
 - **Uptime monitor** on `/api/health`, **Supabase backups with point-in-time recovery**, a rehearsed restore on staging, and
   the Mapbox token's URL restriction: all in `docs/SECURITY_CHECKLIST.md` under "Operations".
+
+## Admin location picker (Leaflet)
+
+The "Add a meetup point" form has a click-to-pick map built on Leaflet with OpenStreetMap tiles: no account or token. It is
+admin-only; the map riders see is still Mapbox. OpenStreetMap's public tile servers are meant for light use with the
+attribution the map already shows, which fits an admin page. If it ever gets heavy use, switch the tile address in
+`components/admin/LocationPicker.tsx` (and `lib/csp.ts`) to a tile provider you pay for.

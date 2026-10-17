@@ -134,6 +134,42 @@ test.describe("admin", () => {
     await form.getByRole("button", { name: "Add meetup point" }).click();
     await expect(form.getByRole("alert").first()).toBeVisible();
   });
+  test("the location picker fills the latitude and longitude from a click on the map", async ({ page }) => {
+    await page.goto("/admin/meetup-points");
+    await page.getByText("Add a meetup point").click();
+    const form = page.getByTestId("add-point").locator("form");
+    const map = form.getByTestId("location-picker");
+    await expect(map).toBeVisible();
+    await expect(map.locator(".leaflet-tile-pane")).toBeAttached();
+    await expect(form.locator(".leaflet-pin")).toHaveCount(0);
+    await map.click({ position: { x: 150, y: 120 } });
+    await expect(form.locator(".leaflet-pin")).toHaveCount(1);
+    const lat = Number(await form.locator("input[name=lat]").inputValue());
+    const lng = Number(await form.locator("input[name=lng]").inputValue());
+    expect(lat).toBeGreaterThan(34.09);
+    expect(lat).toBeLessThan(34.12);
+    expect(lng).toBeGreaterThan(-117.73);
+    expect(lng).toBeLessThan(-117.69);
+    // A second click moves the pin and changes the numbers.
+    await map.click({ position: { x: 60, y: 60 } });
+    await expect(form.locator(".leaflet-pin")).toHaveCount(1);
+    expect(Number(await form.locator("input[name=lat]").inputValue())).not.toBe(lat);
+  });
+
+  test("typing coordinates puts the pin on the map, and the center button fills them for keyboard users", async ({ page }) => {
+    await page.goto("/admin/meetup-points");
+    await page.getByText("Add a meetup point").click();
+    const form = page.getByTestId("add-point").locator("form");
+    await form.locator("input[name=lat]").fill("34.1062");
+    await form.locator("input[name=lng]").fill("-117.7095");
+    await expect(form.locator(".leaflet-pin")).toHaveCount(1);
+    await form.locator("input[name=lat]").fill("");
+    await form.locator("input[name=lng]").fill("");
+    await form.getByRole("button", { name: "Use the center of the map" }).click();
+    expect(Number(await form.locator("input[name=lat]").inputValue())).toBeCloseTo(34.106, 1);
+    expect(Number(await form.locator("input[name=lng]").inputValue())).toBeCloseTo(-117.709, 1);
+  });
+
   test("the audit log lists actions newest first", async ({ page }) => {
     await page.goto("/admin/audit");
     const rows = page.getByTestId("audit-row");

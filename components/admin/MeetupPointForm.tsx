@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { addMeetupPoint, updateMeetupPoint } from "@/app/admin/actions";
 import type { FormState } from "@/app/(app)/trip/[id]/actions";
+import { LocationPicker } from "@/components/admin/LocationPicker";
 import { CAMPUS_IDS, CAMPUS_SHORT } from "@/lib/campuses";
 import type { AdminPoint } from "@/lib/data/types";
 import { MEETUP_TYPES } from "@/lib/schemas/moderation";
@@ -11,6 +12,8 @@ import { MEETUP_TYPES } from "@/lib/schemas/moderation";
 export function MeetupPointForm({ point }: { point?: AdminPoint }) {
   const [state, action, pending] = useActionState<FormState, FormData>(point ? updateMeetupPoint : addMeetupPoint, { status: "idle" });
   const [done, setDone] = useState(false);
+  const [lat, setLat] = useState(point?.lat != null ? String(point.lat) : "");
+  const [lng, setLng] = useState(point?.lng != null ? String(point.lng) : "");
   const fields: Record<string, string> = state.status === "error" ? (state.fields ?? {}) : {};
   const id = point?.id ?? "new";
   const field = (name: string, label: string, props: React.InputHTMLAttributes<HTMLInputElement>) => (
@@ -39,8 +42,9 @@ export function MeetupPointForm({ point }: { point?: AdminPoint }) {
           {MEETUP_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
         </select>
       </div>
-      {field("lat", "Latitude", { defaultValue: point?.lat, inputMode: "decimal", placeholder: "34.1060" })}
-      {field("lng", "Longitude", { defaultValue: point?.lng, inputMode: "decimal", placeholder: "-117.7090" })}
+      <LocationPicker lat={lat} lng={lng} onPick={(a, b) => { setLat(a); setLng(b); }} />
+      {field("lat", "Latitude", { value: lat, onChange: (e) => setLat(e.target.value), inputMode: "decimal", placeholder: "34.1060" })}
+      {field("lng", "Longitude", { value: lng, onChange: (e) => setLng(e.target.value), inputMode: "decimal", placeholder: "-117.7090" })}
       <div className="sm:col-span-2">
         <label htmlFor={`${id}-standAt`} className="mb-1 block text-sm font-bold">Where to stand</label>
         <input id={`${id}-standAt`} name="standAt" defaultValue={point?.standAt ?? ""} maxLength={200} className="field" aria-invalid={fields.standAt ? true : undefined} aria-describedby={`${id}-standAt-help`} />

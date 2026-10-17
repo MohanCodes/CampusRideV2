@@ -34,6 +34,7 @@ describe("buildCsp", () => {
     expect(directive(csp, "worker-src")).toContain("blob:");
     expect(directive(csp, "img-src")).toContain("https://proj.supabase.co");
     expect(directive(csp, "img-src")).toContain("blob:");
+    expect(directive(csp, "img-src")).toContain("https://tile.openstreetmap.org");
   });
   it("upgrades insecure requests in production only", () => {
     expect(csp).toContain("upgrade-insecure-requests");

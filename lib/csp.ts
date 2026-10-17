@@ -36,7 +36,8 @@ export function buildCsp({ nonce, supabaseUrl, sentryDsn, dev = false }: CspOpti
     dev ? "ws://localhost:*" : null,
     dev ? "http://127.0.0.1:*" : null,
   ];
-  const img = ["'self'", "data:", "blob:", "https://api.mapbox.com", "https://*.tiles.mapbox.com", supabase?.origin];
+  // OpenStreetMap tiles are for the admin location picker (Leaflet); riders' maps use Mapbox.
+  const img = ["'self'", "data:", "blob:", "https://api.mapbox.com", "https://*.tiles.mapbox.com", "https://tile.openstreetmap.org", supabase?.origin];
 
   const directives: [string, (string | null | undefined)[]][] = [
     ["default-src", ["'self'"]],

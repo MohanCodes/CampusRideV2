@@ -5,7 +5,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 const demo = () => test.info().project.name.startsWith("demo");
 const PAGES_APP = ["/", "/sign-in", "/safety", "/terms", "/privacy"];
-const PAGES_DEMO = ["/", "/trip/t1", "/post/offer", "/rides", "/inbox", "/chat/c1", "/request/r1", "/user/d1", "/me", "/safety", "/admin/reports"];
+const PAGES_DEMO = ["/", "/trip/t1", "/post/offer", "/rides", "/inbox", "/chat/c1", "/request/r1", "/user/d1", "/me", "/safety", "/admin/reports", "/admin/meetup-points"];
 
 async function violations(page: Page, path: string): Promise<string[]> {
   const seen: string[] = [];
