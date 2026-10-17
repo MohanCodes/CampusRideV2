@@ -45,3 +45,24 @@ messages every few seconds whenever the live feed isn't connected, so chat works
 itself could not be exercised without a Supabase project: when staging exists, open one chat in two browsers
 and confirm a message appears in the other without a refresh. Realtime must be enabled for the project
 (it is by default), and the Content-Security-Policy added in Step 12 must allow the project's `wss://` address.
+
+## Email (Resend) and the scheduled jobs
+
+Built and tested, but nothing can send until these exist (you provide them; nothing is faked):
+
+- **Resend account and a verified sending domain**, with SPF, DKIM and DMARC records.
+- **Edge Function secrets** (Supabase dashboard, or `supabase secrets set`): `RESEND_API_KEY`, `EMAIL_FROM`
+  (for example `Campus Ride <hello@your-domain>`), `EMAIL_FUNCTION_SECRET` (a long random value), and
+  `SITE_URL` (the site's address, used for the button in every email). `SUPABASE_URL` and
+  `SUPABASE_SERVICE_ROLE_KEY` are provided to the function automatically.
+- **Vault secrets** `email_function_url` (the deployed `send-emails` function's address) and
+  `email_function_secret` (the same value as `EMAIL_FUNCTION_SECRET`). Until both exist, the every-minute
+  job `drain_email_outbox` quietly does nothing.
+- **Deploy the function:** `supabase functions deploy send-emails` (Step 13).
+
+The `pg_cron` schedule is created by migration 21 on a Supabase database. It could not be run here
+(no Supabase), so after the first push to staging, open the Supabase dashboard (Integrations, Cron) and confirm
+the nine jobs exist: `expire_seat_requests`, `expire_ride_requests`, `expire_offers_for_departed`,
+`mark_trips_past`, `meetup_reminders`, `request_ending_soon`, `matching_nudges`, `drain_email_outbox`, `purge_old_data`.
+
+Email footers link to `/me` (notification settings) and `/safety`; those pages arrive in Step 11.

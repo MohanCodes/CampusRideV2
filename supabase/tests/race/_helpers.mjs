@@ -112,7 +112,7 @@ export async function startRun() {
     await q("delete from meetup_points where id = any($1)", [created.points]);
     await q("delete from auth.users where id = any($1)", [created.users]);
     await admin.end();
-    console.log(run.failures === 0 ? "all concurrency checks passed" : `${run.failures} concurrency check(s) failed`);
+    console.log(run.failures === 0 ? "all checks passed" : `${run.failures} check(s) failed`);
     process.exit(run.failures === 0 ? 0 : 1);
   };
   return run;

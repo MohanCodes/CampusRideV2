@@ -73,11 +73,13 @@ try {
     await client.query("truncate shim.results restart identity");
   }
 
-  // Tests that need several database sessions at once (locks, races). They read DATABASE_URL.
-  const raceDir = join(root, "supabase/tests/race");
+  // Tests that need several database sessions at once (locks, races) or that check the database against the
+  // TypeScript code (node/). They read DATABASE_URL.
+  for (const folder of ["race", "node"]) {
+  const raceDir = join(root, `supabase/tests/${folder}`);
   for (const file of readdirSync(raceDir).filter((f) => f.endsWith(".mjs") && !f.startsWith("_")).sort()) {
     if (filter && !file.includes(filter)) continue;
-    process.stdout.write(`race/${file}: `);
+    process.stdout.write(`${folder}/${file}: `);
     const code = await new Promise((resolve) => {
       const p = spawn(process.execPath, [join(raceDir, file)], { env: { ...process.env, DATABASE_URL: url }, stdio: ["ignore", "pipe", "pipe"] });
       let out = "";
@@ -86,6 +88,7 @@ try {
       p.on("close", (c) => { console.log(c === 0 ? "passed" : "FAILED"); if (c !== 0 || process.env.VERBOSE) console.log(out.replace(/^/gm, "  ")); resolve(c); });
     });
     if (code !== 0) failed++;
+  }
   }
 } finally {
   await client.end().catch(() => {});

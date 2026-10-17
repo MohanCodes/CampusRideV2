@@ -422,3 +422,9 @@ enabled = true
 # formatted with uppercase keywords, indent 2, max width 180, trailing commas,
 # and column/key alignment. Set to "null" to emit raw, unformatted SQL.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":180,\"commaStyle\":\"trailing\"}"
+
+# Called by a scheduled job with a shared secret (x-function-secret), not by a signed-in person, so it
+# doesn't use a user token.
+[functions.send-emails]
+enabled = true
+verify_jwt = false
