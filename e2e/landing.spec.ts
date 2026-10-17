@@ -38,3 +38,9 @@ test("the landing page shows sample trips that are not links", async ({ page }) 
   await expect(cards.first().getByRole("link")).toHaveCount(0);
   await expect(page.getByText("These are examples, not real trips.")).toBeVisible();
 });
+
+test("the landing page has a Sign in link that opens the sign-in screen", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("link", { name: "Sign in" }).first().click();
+  await expect(page).toHaveURL(/\/sign-in/);
+});

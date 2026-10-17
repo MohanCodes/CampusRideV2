@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { TripCard } from "@/components/board/TripCard";
 import { Eyebrow } from "@/components/Eyebrow";
 import { LegalLinks } from "@/components/LegalLinks";
@@ -77,9 +78,9 @@ export function LandingPage() {
             <a href="#faq" className="hidden min-[651px]:inline">
               FAQ
             </a>
-            <span className="rounded-full border border-line px-4 py-[11px] text-xs">
-              In development
-            </span>
+            <Link href="/sign-in" className="btn-secondary">
+              Sign in
+            </Link>
           </div>
         </nav>
       </header>

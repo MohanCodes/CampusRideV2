@@ -50,3 +50,4 @@ next-env.d.ts
 
 # second build used by the browser tests
 /.next-demo/
+/.next-e2e/

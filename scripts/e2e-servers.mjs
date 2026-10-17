@@ -4,17 +4,16 @@
 // Playwright starts this script and waits for port 3101, which comes up last.
 import { spawn, spawnSync } from "node:child_process";
 
-const env = process.env;
+// A developer's .env.local must not turn these "no backend" servers into real ones. Next only reads .env.local for
+// variables that are not already defined, and an empty value counts as defined (and as "not set" to the app).
+// Its own build folder, so a `next dev` running alongside is not overwritten.
+const env = { ...process.env, NEXT_DIST_DIR: ".next-e2e", NEXT_PUBLIC_SUPABASE_URL: "", NEXT_PUBLIC_SUPABASE_ANON_KEY: "" };
 const demoEnv = {
   ...env,
   NEXT_DIST_DIR: ".next-demo",
   CAMPUS_RIDE_DEMO: "1",
   CAMPUS_RIDE_DEMO_NOW: "2026-10-17T20:00:00Z", // Saturday, 1:00 PM in Los Angeles
 };
-// A developer's .env.local must not turn the "no backend" server into a real one.
-for (const k of ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"]) {
-  delete demoEnv[k];
-}
 
 function build(e) {
   const r = spawnSync("npx", ["next", "build"], { stdio: "inherit", env: e });

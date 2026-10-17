@@ -30,12 +30,19 @@ export async function requestCode(_prev: RequestCodeState, formData: FormData): 
   if (lookupError) return { status: "error", message: GENERIC_ERROR, email };
   if (!allowed) return { status: "error", message: NOT_SCHOOL_EMAIL, email };
 
-  const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+  // The emailed code is the normal path. A link in the same email (the stock template, before custom SMTP) comes back through /auth/callback.
+  const site = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "");
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: true, ...(site ? { emailRedirectTo: `${site}/auth/callback` } : {}) },
+  });
   if (error) {
     if (error.message.toLowerCase().includes("school email")) {
       return { status: "error", message: NOT_SCHOOL_EMAIL, email };
     }
     if (error.status === 429) return { status: "error", message: errorMessage("rate_limited"), email };
+    // For the server log only: what Auth said, without the address.
+    console.error("sign-in code not sent", { status: error.status, code: error.code });
     return { status: "error", message: "We couldn't send the code. Try again.", email };
   }
   return { status: "sent", email, sentAt: Date.now() };
