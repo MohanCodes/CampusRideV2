@@ -99,3 +99,14 @@ export function formatWindow(
   if (flexibility === "exact") return `${day}, ${formatTime(start, tz)}`;
   return `${day}, ${formatTime(start, tz)} to ${formatTime(end, tz)}`;
 }
+
+/** The middle of a request's window: the time it is centered on, for pre-filling edit forms and offers. */
+export function requestCenter(
+  windowStart: Date | string, windowEnd: Date | string, flexibility: "exact" | "pm30" | "pm60" | "anytime",
+): Date {
+  const a = new Date(windowStart).getTime();
+  const b = new Date(windowEnd).getTime();
+  if (flexibility === "exact") return new Date(a);
+  if (flexibility === "anytime") return new Date(a + 12 * 3600_000);
+  return new Date((a + b) / 2);
+}

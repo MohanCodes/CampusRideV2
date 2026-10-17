@@ -13,18 +13,21 @@ import { localToUtc } from "@/lib/format/tz";
 type Props = {
   places: PlaceOption[]; points: MeetupOption[]; campusId: string;
   defaults: { date: string; time: string; meetupPointId: string };
+  // When the trip answers a request, its destination is already chosen and the offer goes out with it.
+  forRequest?: { id: string; destination: Destination | null };
   // The server's clock when the page was made. The server checks the time again on submit.
   nowIso: string;
 };
 
 // "Offer a ride": one scrolling form with smart defaults (next half hour, 3 seats, last used meetup point).
-export function OfferForm({ places, points, campusId, defaults, nowIso }: Props) {
+export function OfferForm({ places, points, campusId, defaults, nowIso, forRequest }: Props) {
   const router = useRouter();
   const [state, action, pending] = useActionState<PostTripState, FormData>(postTrip, { status: "idle" });
   const form = useRef<HTMLFormElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
 
-  const [destination, setDestination] = useState<Destination | null>(null);
+  const initialDestination = forRequest?.destination ?? null;
+  const [destination, setDestination] = useState<Destination | null>(initialDestination);
   const [date, setDate] = useState(defaults.date);
   const [time, setTime] = useState(defaults.time);
   const [backBy, setBackBy] = useState("");
@@ -42,7 +45,7 @@ export function OfferForm({ places, points, campusId, defaults, nowIso }: Props)
   const fieldErrors = state.status === "error" ? (state.fields ?? {}) : {};
 
   // Warn before the browser tab closes with a half-filled trip.
-  const dirty = Boolean(destination || backBy || make || color || plate || cost || notes || seats !== 3 || date !== defaults.date || time !== defaults.time || pointId !== initialPoint);
+  const dirty = Boolean(destination !== initialDestination || backBy || make || color || plate || cost || notes || seats !== 3 || date !== defaults.date || time !== defaults.time || pointId !== initialPoint);
   useEffect(() => {
     if (!dirty) return;
     const warn = (e: BeforeUnloadEvent) => e.preventDefault();
@@ -84,6 +87,7 @@ export function OfferForm({ places, points, campusId, defaults, nowIso }: Props)
         <input type="hidden" name="sessionToken" value={destination?.kind === "other" ? destination.sessionToken : ""} />
         <input type="hidden" name="meetupPointId" value={pointId} />
         <input type="hidden" name="seats" value={seats} />
+        {forRequest && <input type="hidden" name="forRequest" value={forRequest.id} />}
 
         <DestinationPicker places={places} value={destination} onChange={setDestination} error={fieldErrors.destination} />
 

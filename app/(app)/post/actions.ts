@@ -7,6 +7,7 @@ import { getNow, isDemo } from "@/lib/demo";
 import { errorCode, errorMessage } from "@/lib/errors";
 import { backByDate, localToUtc } from "@/lib/format/tz";
 import { retrieveDestination, searchDestinations, type DestinationSuggestion } from "@/lib/mapbox";
+import { performSendOffer } from "@/lib/actions/offer";
 import { postTripSchema, searchOtherSchema } from "@/lib/schemas/post";
 import { createClient } from "@/lib/supabase/server";
 
@@ -87,7 +88,15 @@ export async function postTrip(_prev: PostTripState, formData: FormData): Promis
   }
 
   revalidatePath("/");
-  redirect(`/post/confirmed/${data}`);
+  // Posted to answer a request: remember the link and send the offer right away.
+  let tail = "";
+  if (v.forRequest) {
+    await supabase.rpc("link_trip_to_request", { p_trip: data, p_request: v.forRequest });
+    const offer = await performSendOffer(supabase, { requestId: v.forRequest, tripId: String(data), message: "" });
+    tail = `?offered=${offer.ok ? "1" : "0"}&for=${encodeURIComponent(v.forRequest)}`;
+    revalidatePath(`/request/${v.forRequest}`);
+  }
+  redirect(`/post/confirmed/${data}${tail}`);
 }
 
 export type OtherSearchResult =

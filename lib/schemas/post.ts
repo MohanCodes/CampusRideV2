@@ -26,6 +26,8 @@ export const postTripSchema = z
     costNote: text(200, "Keep the cost note under 200 characters."),
     notes: text(300, "Keep notes under 300 characters."),
     confirmOverlap: z.string().optional().default(""),
+    // Set when the trip is posted to answer an "In search of" request: the offer goes out with it.
+    forRequest: z.string().trim().max(40).optional().default(""),
   })
   .superRefine((v, ctx) => {
     if (v.destinationKind === "place" && !v.placeId) ctx.addIssue({ code: "custom", path: ["destination"], message: "Pick where you're going." });

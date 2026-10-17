@@ -11,11 +11,14 @@ const pickPlace = async (page: Page, name: string) => {
 };
 
 test.describe("choosing what to post", () => {
-  test("offers the two kinds, and says plainly that asking isn't open yet", async ({ page }) => {
+  test("offers the two kinds: offer a ride, or ask for one", async ({ page }) => {
     await page.goto("/post");
     await expect(page.getByRole("heading", { level: 1, name: "Post" })).toBeVisible();
     await expect(page.getByTestId("choose-offer")).toContainText("Offer a ride");
-    await expect(page.getByTestId("choose-ask-disabled")).toContainText("Asking for a ride isn't open yet.");
+    await expect(page.getByTestId("choose-ask")).toContainText("Ask for a ride");
+    await page.getByTestId("choose-ask").click();
+    await expect(page).toHaveURL(/\/post\/ask$/);
+    await page.goBack();
     await page.getByTestId("choose-offer").click();
     await expect(page).toHaveURL(/\/post\/offer$/);
   });

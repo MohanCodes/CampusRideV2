@@ -6,7 +6,7 @@ export const FEATURES = {
   myRides: true,     // Step 6
   inbox: true,       // Step 6
   chat: true,        // Step 7
-  inSearchOf: false, // Step 8: offering a ride and asking for one
+  inSearchOf: true,  // Step 8: asking for a ride and offering one
   profile: false,    // Step 10 and 11
   report: false,     // Step 10
   safetyPage: false, // Step 11

@@ -85,7 +85,7 @@ async function BoardResults({ filters, now, href, forceError }: { filters: Board
           </Link>
         )}
         {FEATURES.inSearchOf && (
-          <Link href="/post?kind=request" className="btn-secondary">
+          <Link href="/post/ask" className="btn-secondary">
             Ask for a ride
           </Link>
         )}

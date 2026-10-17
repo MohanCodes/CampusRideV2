@@ -25,6 +25,7 @@ const MESSAGES: Record<string, string> = {
   too_far_ahead: "Pick a time within the next 7 days.",
   not_open: "This request isn't open anymore.",
   trip_mismatch: "This trip doesn't match that request.",
+  already_offered: "You already offered this trip for that request.",
   too_many_offers: "You have 10 offers waiting. Wait for replies or withdraw one.",
   no_longer_available: "This ride isn't available anymore.",
   too_early: "You can report a no-show after the departure time.",

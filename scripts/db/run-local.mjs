@@ -75,7 +75,7 @@ try {
 
   // Tests that need several database sessions at once (locks, races). They read DATABASE_URL.
   const raceDir = join(root, "supabase/tests/race");
-  for (const file of readdirSync(raceDir).filter((f) => f.endsWith(".mjs")).sort()) {
+  for (const file of readdirSync(raceDir).filter((f) => f.endsWith(".mjs") && !f.startsWith("_")).sort()) {
     if (filter && !file.includes(filter)) continue;
     process.stdout.write(`race/${file}: `);
     const code = await new Promise((resolve) => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  dayDiff, dayKey, dayStart, formatBackBy, formatDay, formatDayHeader, formatDeparture, formatTime, formatWindow, nextDayKey,
+  requestCenter, dayDiff, dayKey, dayStart, formatBackBy, formatDay, formatDayHeader, formatDeparture, formatTime, formatWindow, nextDayKey,
 } from "./time";
 
 // Saturday, Oct 17, 2026, 1:00 PM in Los Angeles (PDT, UTC-7).
@@ -79,4 +79,12 @@ describe("rider windows", () => {
   it("shows an exact time", () => expect(formatWindow(s, e, "exact", NOW)).toBe("Tomorrow, 3:00 PM"));
   it("shows a range for plus or minus", () => expect(formatWindow(s, e, "pm30", NOW)).toBe("Tomorrow, 3:00 PM to 4:00 PM"));
   it("says any time", () => expect(formatWindow(s, e, "anytime", NOW)).toBe("Tomorrow, any time"));
+});
+
+describe("requestCenter", () => {
+  const a = "2026-10-18T22:00:00Z";
+  const b = "2026-10-19T00:00:00Z";
+  it("is the start for an exact request", () => expect(requestCenter(a, b, "exact").toISOString()).toBe("2026-10-18T22:00:00.000Z"));
+  it("is the middle for a plus or minus window", () => expect(requestCenter(a, b, "pm60").toISOString()).toBe("2026-10-18T23:00:00.000Z"));
+  it("is midday for an any-time request", () => expect(requestCenter("2026-10-18T07:00:00Z", "2026-10-19T07:00:00Z", "anytime").toISOString()).toBe("2026-10-18T19:00:00.000Z"));
 });

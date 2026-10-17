@@ -10,8 +10,11 @@ import { getNow, isDemo } from "@/lib/demo";
 
 export const metadata = { title: "Trip posted — CampusRide" };
 
-export default async function ConfirmedPage({ params }: PageProps<"/post/confirmed/[id]">) {
+export default async function ConfirmedPage({ params, searchParams }: PageProps<"/post/confirmed/[id]">) {
   const { id } = await params;
+  const sp = await searchParams;
+  const offered = sp.offered === "1" ? "sent" : sp.offered === "0" ? "failed" : null;
+  const forId = typeof sp.for === "string" ? sp.for : null;
   const demo = isDemo();
   if (!demo) await requireOnboarded(`/post/confirmed/${id}`);
   const signedIn = Boolean(await getUser());
@@ -31,6 +34,13 @@ export default async function ConfirmedPage({ params }: PageProps<"/post/confirm
     <AppShell signedIn={signedIn} demo={demo}>
       <h1 className="t-h1 mb-2 mt-4 text-[2.4rem] md:text-[3rem]">Your trip is posted</h1>
       <p className="mb-6 text-muted">Riders can find it on the board now. We&apos;ll email you when someone asks for a seat.</p>
+      {offered === "sent" && <p data-testid="offer-sent" className="card mb-6 max-w-[420px] p-4">Your offer was sent. We&apos;ll email you if they accept.</p>}
+      {offered === "failed" && (
+        <p role="alert" data-testid="offer-failed" className="card mb-6 max-w-[420px] border-danger p-4">
+          Your trip is posted, but we couldn&apos;t send the offer.{" "}
+          {forId && <Link href={`/request/${forId}`} className="link">Open the request to try again</Link>}
+        </p>
+      )}
       <div className="max-w-[420px]">
         <TripCard trip={res.data} now={getNow()} />
       </div>

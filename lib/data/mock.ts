@@ -1,4 +1,4 @@
-import type { ChatMessage, ChatThread, Conversation, IncomingRequest, Person, RequestCardData, RideRow, TripCardData, TripDetail, TripState } from "./types";
+import type { ChatMessage, ChatThread, Conversation, IncomingRequest, OfferCardData, Person, RequestDetail, RequestCardData, RideRow, TripCardData, TripDetail, TripState } from "./types";
 
 // Sample data for demo mode. It mirrors supabase/seed_dev.sql (the same people, places and
 // timing), but none of it is real. Times are relative to `now` so the board always looks current.
@@ -84,8 +84,15 @@ export function demoRides(now: Date): RideRow[] {
   return [...driving, ...riding];
 }
 
+// The demo viewer's own open request, which has offers waiting.
+const OWN_REQUEST = (now: Date): RequestCardData => ({
+  id: "r4", destinationName: "Trader Joe's", chip: "Trader Joe's", windowStart: iso(now, 30), windowEnd: iso(now, 32), flexibility: "pm60",
+  seats: 1, meetupPointName: "Platt Campus Center", chipIn: true, note: "Two grocery bags.", rider: DEMO_ME_PERSON, isOwn: true,
+});
+
 export function demoRequests(now: Date): RequestCardData[] {
   return [
+    OWN_REQUEST(now),
     { id: "r1", destinationName: "Trader Joe's", chip: "Trader Joe's", windowStart: iso(now, 24), windowEnd: iso(now, 25), flexibility: "pm30", seats: 1, meetupPointName: "Smith Campus Center", chipIn: true, note: "Just a few bags.", rider: jordan, isOwn: false },
     { id: "r2", destinationName: "Ontario International Airport (ONT)", chip: "Airport (ONT)", windowStart: iso(now, 72), windowEnd: iso(now, 84), flexibility: "anytime", seats: 2, meetupPointName: "Smith Campus Center", chipIn: true, note: null, rider: riley, isOwn: false },
     { id: "r3", destinationName: "Rancho Santa Ana Botanic Garden", chip: "Other", windowStart: iso(now, 48), windowEnd: iso(now, 50), flexibility: "pm60", seats: 1, meetupPointName: "Smith Campus Center", chipIn: false, note: null, rider: alex, isOwn: false },
@@ -186,4 +193,59 @@ export function demoThreads(now: Date): ChatThread[] {
       other: c.other, lastBody: last.body, lastAt: last.createdAt, lastKind: last.kind, lastFromMe: last.senderId === DEMO_ME, unread,
     };
   }).sort((a, b) => (b.lastAt ?? "").localeCompare(a.lastAt ?? ""));
+}
+
+// "In search of" detail -------------------------------------------------------------------------------------
+function demoOffers(now: Date): OfferCardData[] {
+  const base = { requestId: "r4", tripName: "Trader Joe's", requestName: "Trader Joe's" };
+  return [
+    { ...base, id: "of1", tripId: "t1", status: "pending", message: "Happy to take you, I have room for bags.", createdAt: iso(now, -3), driver: maya,
+      departsAt: iso(now, 31), backBy: iso(now, 33), seatsLeft: 2, meetupPointName: "Platt Campus Center", carMake: "Honda Civic", carColor: "Blue", costNote: "Split gas and parking" },
+    { ...base, id: "of2", tripId: "t15", status: "pending", message: null, createdAt: iso(now, -2), driver: jordan,
+      departsAt: iso(now, 30.5), backBy: null, seatsLeft: 3, meetupPointName: "Smith Campus Center", carMake: "Mazda 3", carColor: "Red", costNote: null },
+    { ...base, id: "of3", tripId: "t16", status: "declined", message: "I can leave a bit earlier.", createdAt: iso(now, -6), driver: alex,
+      departsAt: iso(now, 29), backBy: null, seatsLeft: 1, meetupPointName: "Smith Campus Center", carMake: "Toyota RAV4", carColor: "White", costNote: null },
+  ];
+}
+export const demoOffersInbox = (now: Date): OfferCardData[] => demoOffers(now).filter((o) => o.status === "pending");
+
+export type DemoRequestView = "own" | "driver" | "matched" | "cancelled" | "offered";
+export const DEMO_REQUEST_VIEWS: DemoRequestView[] = ["own", "driver", "matched", "cancelled", "offered"];
+
+// r4 is the viewer's own request (default "own"). Any other request is seen as a driver who could answer it.
+export function demoRequestDetail(id: string, now: Date, view?: DemoRequestView): RequestDetail | null {
+  const request = demoRequests(now).find((r) => r.id === id);
+  if (!request) return null;
+  const mode: DemoRequestView = view ?? (request.isOwn ? "own" : "driver");
+  const own = mode === "own" || mode === "matched" || mode === "cancelled";
+  const status = mode === "matched" ? "matched" : mode === "cancelled" ? "cancelled" : "open";
+  const offers = demoOffers(now).map((o) => ({ ...o, requestId: id }));
+  return {
+    request: { ...request, isOwn: own },
+    status,
+    isOwn: own,
+    pendingOffers: own && status === "open" ? offers.filter((o) => o.status === "pending").length : 0,
+    matchedTripId: status === "matched" ? "t1" : null,
+    offers: own ? (status === "open" ? offers : offers.map((o) => (o.status === "pending" ? { ...o, status: o.id === "of1" && status === "matched" ? "accepted" : "closed" } : o))) : [],
+    tripOptions: !own
+      ? [
+          { id: "t20", destinationName: request.destinationName, departsAt: request.windowStart, seatsLeft: 2, meetupPointName: "Platt Campus Center" },
+          { id: "t21", destinationName: request.destinationName, departsAt: request.windowEnd, seatsLeft: 3, meetupPointName: "Honnold/Mudd Library" },
+        ]
+      : [],
+    myOffer: mode === "offered" ? { ...offers[0], id: "of9", driver: DEMO_ME_PERSON, requestId: id, status: "pending", message: "I can take you." } : null,
+  };
+}
+
+export type OwnRequestRow = { request: RequestCardData; status: "open" | "matched" | "expired" | "cancelled"; pendingOffers: number; matchedTripId: string | null };
+export function demoMyRequests(now: Date): OwnRequestRow[] {
+  const mk = (id: string, dest: string, chip: string, start: number, end: number): RequestCardData => ({
+    id, destinationName: dest, chip, windowStart: iso(now, start), windowEnd: iso(now, end), flexibility: "pm60", seats: 1,
+    meetupPointName: "Platt Campus Center", chipIn: true, note: null, rider: DEMO_ME_PERSON, isOwn: true,
+  });
+  return [
+    { request: OWN_REQUEST(now), status: "open", pendingOffers: 2, matchedTripId: null },
+    { request: mk("r5", "Ontario Mills", "Other", 10, 12), status: "cancelled", pendingOffers: 0, matchedTripId: null },
+    { request: mk("r6", "Claremont Village", "The Village", -30, -28), status: "expired", pendingOffers: 0, matchedTripId: null },
+  ];
 }

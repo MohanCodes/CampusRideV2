@@ -184,7 +184,8 @@ test.describe("My Rides", () => {
 
   test("Requests lists pending and declined asks", async ({ page }) => {
     await page.goto("/rides?tab=requests");
-    await expect(rows(page)).toHaveCount(2);
+    await expect(rows(page)).toHaveCount(2); // seat requests; the person's own requests for a ride are listed above them
+    await expect(page.getByTestId("my-request-row")).toHaveCount(1);
     await expect(rows(page).filter({ hasText: "Target (Montclair)" })).toContainText("Pending");
     await expect(rows(page).filter({ hasText: "Trader Joe's" })).toContainText("Declined");
     await expect(page.getByRole("link", { name: /Requests/ })).toHaveAttribute("aria-current", "page");
@@ -202,7 +203,8 @@ test.describe("My Rides", () => {
   test("shows a count on each tab", async ({ page }) => {
     await page.goto("/rides");
     await expect(page.getByRole("link", { name: /Upcoming/ })).toContainText("2");
-    await expect(page.getByRole("link", { name: /Past/ })).toContainText("3");
+    await expect(page.getByRole("link", { name: /Requests/ })).toContainText("3");
+    await expect(page.getByRole("link", { name: /Past/ })).toContainText("5");
   });
 
   test("a row opens its trip", async ({ page }) => {
@@ -231,18 +233,19 @@ test.describe("Inbox", () => {
     await expect(page.getByRole("button", { name: "Decline Sam" })).toBeVisible();
   });
 
-  test("the Inbox link carries a badge: two requests and one unread message", async ({ page }) => {
+  test("the Inbox link carries a badge: two seat requests, one unread message, and two offers", async ({ page }) => {
     await page.goto("/");
     const badge = page.getByTestId("nav-badge").and(page.locator(":visible"));
-    await expect(badge).toHaveText(/3/);
-    await expect(page.getByRole("link", { name: /Inbox/ }).and(page.locator(":visible"))).toContainText("3 waiting");
+    await expect(badge).toHaveText(/5/);
+    await expect(page.getByRole("link", { name: /Inbox/ }).and(page.locator(":visible"))).toContainText("5 waiting");
   });
 
   test("the error state offers Try again", async ({ page }) => {
     await page.goto("/inbox?fail=1");
-    await expect(page.getByTestId("error-state")).toHaveCount(2); // seat requests and chats each say so
-    await expect(page.getByTestId("error-state").first()).toContainText("We couldn't load your inbox");
-    await expect(page.getByTestId("error-state").nth(1)).toContainText("We couldn't load your chats");
+    await expect(page.getByTestId("error-state")).toHaveCount(3); // offers, seat requests, and chats each say so
+    await expect(page.getByTestId("error-state").nth(0)).toContainText("We couldn't load your offers");
+    await expect(page.getByTestId("error-state").nth(1)).toContainText("We couldn't load your inbox");
+    await expect(page.getByTestId("error-state").nth(2)).toContainText("We couldn't load your chats");
   });
 });
 

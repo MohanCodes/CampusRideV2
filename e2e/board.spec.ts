@@ -87,10 +87,13 @@ test.describe("board", () => {
     await page.goto("/");
     await page.getByRole("link", { name: "In search of", exact: true }).click();
     await expect(page).toHaveURL(/tab=requests/);
-    await expect(page.getByTestId("request-card")).toHaveCount(3);
-    await expect(page.getByTestId("request-card").first()).toContainText("Will chip in");
-    await expect(page.getByTestId("request-card").first()).toContainText("Needs 1 seat");
-    await expect(page.getByTestId("request-card").first()).toContainText("Tomorrow, 1:00 PM to 2:00 PM");
+    await expect(page.getByTestId("request-card")).toHaveCount(4); // three from others and the viewer's own
+    const first = page.getByTestId("request-card").first();
+    await expect(first).toContainText("Will chip in");
+    await expect(first).toContainText("Needs 1 seat");
+    await expect(first).toContainText("Tomorrow, 1:00 PM to 2:00 PM");
+    await expect(first).toContainText("Offer a ride");
+    await expect(page.getByTestId("request-card").filter({ hasText: "Your request" })).toHaveCount(1);
     await expect(page.getByRole("link", { name: "In search of", exact: true })).toHaveAttribute("aria-current", "page");
   });
 

@@ -137,3 +137,49 @@ export type Conversation = {
   open: boolean;
   closedReason: "time" | "trip_cancelled" | "seat_cancelled" | null;
 };
+
+// In search of -------------------------------------------------------------------------------------------
+export type RequestStatus = "open" | "matched" | "expired" | "cancelled";
+export type OfferStatus = "pending" | "accepted" | "declined" | "withdrawn" | "expired" | "closed";
+
+export type OfferCardData = {
+  id: string;
+  requestId: string;
+  tripId: string;
+  status: OfferStatus;
+  message: string | null;
+  createdAt: string;
+  driver: Person;
+  tripName: string;
+  departsAt: string;
+  backBy: string | null;
+  seatsLeft: number;
+  meetupPointName: string;
+  carMake: string;
+  carColor: string;
+  costNote: string | null;
+  // For the Inbox, where offers from several requests mix.
+  requestName?: string;
+};
+
+// A trip of the driver's that could answer a request.
+export type TripOption = {
+  id: string;
+  destinationName: string;
+  departsAt: string;
+  seatsLeft: number;
+  meetupPointName: string;
+};
+
+export type RequestDetail = {
+  request: RequestCardData;
+  status: RequestStatus;
+  isOwn: boolean;
+  pendingOffers: number;
+  matchedTripId: string | null;
+  // The rider's view: offers waiting, and the ones already answered.
+  offers: OfferCardData[];
+  // The driver's view: their own trips that fit, and any offer they already made.
+  tripOptions: TripOption[];
+  myOffer: OfferCardData | null;
+};
