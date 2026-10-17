@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { ChatThread } from "@/components/chat/ChatThread";
 import { Icon } from "@/components/icons";
+import { SafetyMenu } from "@/components/safety/SafetyMenu";
+import { FEATURES } from "@/lib/features";
 import { ErrorState } from "@/components/states";
 import { UserRow } from "@/components/UserRow";
 import { getUser, requireOnboarded } from "@/lib/auth/dal";
@@ -47,7 +49,10 @@ export default async function ChatPage({ params, searchParams }: PageProps<"/cha
       </Link>
       <div className="mx-auto max-w-[720px]">
         <header className="mb-4 border-b border-line pb-4">
-          <UserRow person={c.other} size={48} />
+          <div className="flex items-start justify-between gap-3">
+            <UserRow person={c.other} size={48} linked />
+            {FEATURES.report && <SafetyMenu target={{ type: "user", id: c.other.id }} noun="person" person={{ id: c.other.id, firstName: c.other.firstName }} tripId={c.tripId} />}
+          </div>
           <p className="mt-3 text-sm text-muted">
             <Link href={`/trip/${c.tripId}`} className="link">{c.tripName}</Link>
             {" · "}

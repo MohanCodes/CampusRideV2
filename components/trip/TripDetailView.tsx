@@ -10,6 +10,7 @@ import { RequestRow } from "@/components/trip/RequestRow";
 import { RequestSeatDialog } from "@/components/trip/RequestSeatDialog";
 import { Toast } from "@/components/Toast";
 import { MeetupMap } from "@/components/map/MeetupMap";
+import { SafetyMenu } from "@/components/safety/SafetyMenu";
 import type { TripDetail } from "@/lib/data/types";
 import { FEATURES } from "@/lib/features";
 import { formatBackBy, formatDeparture } from "@/lib/format/time";
@@ -22,10 +23,15 @@ export function TripDetailView({ trip, now, signedIn, demo, sent = false }: { tr
 
   return (
     <AppShell signedIn={signedIn} demo={demo} hideBottomNav>
-      <Link href="/" className="mt-2 inline-flex min-h-[44px] items-center gap-1 text-sm">
-        <Icon name="back" size={16} />
-        Board
-      </Link>
+      <div className="mt-2 flex items-center justify-between gap-3">
+        <Link href="/" className="inline-flex min-h-[44px] items-center gap-1 text-sm">
+          <Icon name="back" size={16} />
+          Board
+        </Link>
+        {FEATURES.report && trip.state !== "own" && (
+          <SafetyMenu target={{ type: "trip", id: trip.id }} noun="trip" person={{ id: trip.driver.id, firstName: trip.driver.firstName }} />
+        )}
+      </div>
 
       {sent && <Toast message={`Request sent. We'll let you know when ${trip.driver.firstName} replies.`} />}
       <div className="grid gap-8 pb-28 md:pb-0 lg:grid-cols-[1fr_360px]">
@@ -54,7 +60,7 @@ export function TripDetailView({ trip, now, signedIn, demo, sent = false }: { tr
               </p>
             </Row>
             <Row label="Driver" className="lg:hidden">
-              <UserRow person={trip.driver} size={44} />
+              <UserRow person={trip.driver} size={44} linked />
             </Row>
             <Row label="Meetup point">
               <p className="flex items-center gap-2">
@@ -94,7 +100,7 @@ export function TripDetailView({ trip, now, signedIn, demo, sent = false }: { tr
             )}
           </dl>
 
-          {trip.state === "own" && trip.tripStatus === "open" && trip.requests && (
+          {trip.state === "own" && trip.tripStatus !== "cancelled" && trip.requests && (
             <section aria-labelledby="requests-heading" className="mt-8">
               <h2 id="requests-heading" className="t-h2 mb-3">
                 Requests
@@ -106,7 +112,7 @@ export function TripDetailView({ trip, now, signedIn, demo, sent = false }: { tr
               ) : (
                 <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   {trip.requests.map((r) => (
-                    <RequestRow key={r.id} request={r} now={now} />
+                    <RequestRow key={r.id} request={r} now={now} departed={new Date(trip.departsAt) <= now} />
                   ))}
                 </ul>
               )}
@@ -118,7 +124,7 @@ export function TripDetailView({ trip, now, signedIn, demo, sent = false }: { tr
         <aside aria-label="Driver and actions" className="lg:pt-[72px]">
           <div className="card hidden p-4 lg:block">
             <p className="t-label mb-3 text-muted">Driver</p>
-            <UserRow person={trip.driver} size={44} />
+            <UserRow person={trip.driver} size={44} linked />
           </div>
 
           <div

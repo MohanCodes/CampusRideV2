@@ -1,6 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signInUrl } from "@/lib/routes";
 import type { Profile } from "@/lib/types";
@@ -38,4 +38,16 @@ export async function requireOnboarded(returnTo: string) {
   const profile = await getMyProfile();
   if (!profile?.onboarded_at) redirect("/onboarding");
   return profile;
+}
+
+// Admin pages. Anyone else gets the plain not-found page, so the pages don't advertise themselves.
+// (Every admin_* database function checks the role again; this is only the first door.)
+export async function requireAdmin(returnTo: string) {
+  const profile = await requireOnboarded(returnTo);
+  if (profile.role !== "admin") notFound();
+  return profile;
+}
+
+export async function isAdmin(): Promise<boolean> {
+  return (await getMyProfile())?.role === "admin";
 }

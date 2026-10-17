@@ -183,3 +183,41 @@ export type RequestDetail = {
   tripOptions: TripOption[];
   myOffer: OfferCardData | null;
 };
+
+// Profiles and moderation ----------------------------------------------------------------------------------------
+export type PublicProfile = { person: Person; bio: string | null; isMe: boolean };
+
+export type AdminReportRow = {
+  id: string;
+  createdAt: string;
+  status: "new" | "reviewing" | "actioned" | "dismissed";
+  reason: string;
+  targetType: "user" | "trip" | "request" | "message";
+  details: string | null;
+  reporterFirstName: string;
+  targetUserId: string;
+  targetFirstName: string;
+  reportCount: number;
+  noShowCount: number;
+};
+
+// A report in full, for the one admin page where full profiles (and emails) are shown. Opening it is logged.
+export type AdminReportDetail = {
+  report: { id: string; createdAt: string; status: AdminReportRow["status"]; reason: string; targetType: AdminReportRow["targetType"]; details: string | null; handledAt: string | null };
+  reporter: { id: string; firstName: string; lastName: string | null; campusId: string };
+  target: {
+    id: string; firstName: string | null; lastName: string | null; email: string; campusId: string; classYear: number | null;
+    bio: string | null; role: string; suspendedUntil: string | null; deletedAt: string | null; createdAt: string;
+  };
+  trip: { id: string; destinationName: string; departsAt: string; status: string } | null;
+  message: { id: number; body: string; createdAt: string } | null;
+  otherReports: { id: string; reason: string; status: string; createdAt: string }[];
+  noShowCount: number;
+};
+
+export type AdminPoint = {
+  id: string; campusId: string; name: string; type: string; lat: number; lng: number; shared: boolean;
+  status: "approved" | "suspended" | "retired"; standAt: string | null; tripsUsing: number;
+};
+
+export type AuditRow = { id: number; createdAt: string; actorFirstName: string | null; action: string; target: string | null; details: Record<string, unknown> | null };

@@ -1,4 +1,4 @@
-import type { ChatMessage, ChatThread, Conversation, IncomingRequest, OfferCardData, Person, RequestDetail, RequestCardData, RideRow, TripCardData, TripDetail, TripState } from "./types";
+import type { AdminPoint, AdminReportDetail, AdminReportRow, AuditRow, ChatMessage, ChatThread, Conversation, IncomingRequest, OfferCardData, Person, PublicProfile, RequestDetail, RequestCardData, RideRow, TripCardData, TripDetail, TripState } from "./types";
 
 // Sample data for demo mode. It mirrors supabase/seed_dev.sql (the same people, places and
 // timing), but none of it is real. Times are relative to `now` so the board always looks current.
@@ -67,6 +67,16 @@ export function demoOwnRequests(now: Date): IncomingRequest[] {
   ];
 }
 
+// Riders accepted on the viewer's trip t12, which left over a day ago: the driver can mark a no-show.
+export function demoPastRequests(now: Date): IncomingRequest[] {
+  const t = SEEDS.find((x) => x.id === "t12")!;
+  const base = { tripId: t.id, tripName: t.dest, departsAt: iso(now, t.inHours), meetupPointName: t.point, seatsLeft: t.total - t.taken, seats: 1, message: null, status: "accepted" as const };
+  return [
+    { ...base, id: "q9", rider: alex, createdAt: iso(now, -60) },
+    { ...base, id: "q10", rider: sam, createdAt: iso(now, -59) },
+  ];
+}
+
 export const demoInbox = (now: Date): IncomingRequest[] => demoOwnRequests(now).filter((r) => r.status === "pending");
 
 // My Rides for the demo viewer: three trips they drive and four they asked to ride on.
@@ -107,7 +117,7 @@ export function demoTripDetail(id: string, now: Date, view?: DemoView): TripDeta
   const s = SEEDS.find((x) => x.id === id);
   if (!s) return null;
   let state: TripState = s.own ? "own" : s.mine ?? "none";
-  if (s.status !== "open" || s.inHours <= 0 || s.taken >= s.total) state = s.mine === "accepted" ? "accepted" : "unavailable";
+  if (!s.own && (s.status !== "open" || s.inHours <= 0 || s.taken >= s.total)) state = s.mine === "accepted" ? "accepted" : "unavailable";
   if (view) state = view;
   const reveal = state === "accepted" || state === "own";
   return {
@@ -116,7 +126,7 @@ export function demoTripDetail(id: string, now: Date, view?: DemoView): TripDeta
     seatsTaken: s.taken,
     myRequestId: state === "pending" || state === "accepted" ? "demo-request" : null,
     conversationId: state === "accepted" ? "c1" : null,
-    requests: state === "own" ? demoOwnRequests(now) : null,
+    requests: state === "own" ? (id === "t12" ? demoPastRequests(now) : demoOwnRequests(now)) : null,
     destinationName: s.dest,
     departsAt: iso(now, s.inHours),
     backBy: s.backHours == null ? null : iso(now, s.backHours),
@@ -247,5 +257,77 @@ export function demoMyRequests(now: Date): OwnRequestRow[] {
     { request: OWN_REQUEST(now), status: "open", pendingOffers: 2, matchedTripId: null },
     { request: mk("r5", "Ontario Mills", "Other", 10, 12), status: "cancelled", pendingOffers: 0, matchedTripId: null },
     { request: mk("r6", "Claremont Village", "The Village", -30, -28), status: "expired", pendingOffers: 0, matchedTripId: null },
+  ];
+}
+
+// Profiles ------------------------------------------------------------------------------------------------------
+const PEOPLE: Record<string, { person: Person; bio: string | null }> = {
+  d1: { person: maya, bio: "Drives to Trader Joe's most Saturdays." },
+  d2: { person: alex, bio: null },
+  d3: { person: sam, bio: "Flying out of ONT at every break." },
+  d4: { person: jordan, bio: null },
+  d5: { person: riley, bio: null },
+};
+export function demoProfile(id: string): PublicProfile | null {
+  if (id === DEMO_ME) return { person: DEMO_ME_PERSON, bio: "Sample profile for the viewer.", isMe: true };
+  const p = PEOPLE[id];
+  return p ? { person: p.person, bio: p.bio, isMe: false } : null;
+}
+
+// Moderation -----------------------------------------------------------------------------------------------------
+// Sample reports. Times are relative to the real clock only in the sense of "hours ago"; the pinned demo clock
+// formats them, so the queue always looks current.
+const rep = (now: Date, id: string, hoursAgo: number, status: AdminReportRow["status"], reason: string, type: AdminReportRow["targetType"], reporter: string, target: Person, details: string | null, count: number, noShows: number): AdminReportRow => ({
+  id, createdAt: new Date(now.getTime() - hoursAgo * 3600_000).toISOString(), status, reason, targetType: type, details,
+  reporterFirstName: reporter, targetUserId: target.id, targetFirstName: target.firstName, reportCount: count, noShowCount: noShows,
+});
+const reports = (now: Date): AdminReportRow[] => [
+  rep(now, "a1", 2, "new", "No-show", "user", "Maya", alex, null, 3, 3),
+  rep(now, "a2", 5, "new", "Unsafe driving", "trip", "Sam", jordan, "Changed lanes without looking and drove fast on the 210.", 1, 0),
+  rep(now, "a3", 9, "reviewing", "Harassment", "user", "Riley", sam, "Kept messaging after I said no.", 2, 0),
+  rep(now, "a4", 30, "actioned", "Fake profile", "user", "Jordan", riley, "The photo is a cartoon.", 1, 0),
+  rep(now, "a5", 50, "dismissed", "Other", "request", "Alex", jordan, "Note seemed odd.", 1, 0),
+];
+export function demoReportQueue(filters: { status?: string; reason?: string }, now: Date): AdminReportRow[] {
+  return reports(now).filter((r) => (!filters.status || r.status === filters.status) && (!filters.reason || r.reason === filters.reason));
+}
+export function demoReportDetail(id: string, now: Date): AdminReportDetail | null {
+  const all = reports(now);
+  const r = all.find((x) => x.id === id);
+  if (!r) return null;
+  const p = Object.values(PEOPLE).find((x) => x.person.id === r.targetUserId)!;
+  return {
+    report: { id: r.id, createdAt: r.createdAt, status: r.status, reason: r.reason, targetType: r.targetType, details: r.details, handledAt: r.status === "actioned" || r.status === "dismissed" ? r.createdAt : null },
+    reporter: { id: "rep", firstName: r.reporterFirstName, lastName: "Sample", campusId: "hmc" },
+    target: {
+      id: p.person.id, firstName: p.person.firstName, lastName: "Sample", email: `${p.person.firstName.toLowerCase()}.sample@example.edu`, campusId: String(p.person.campusId),
+      classYear: p.person.classYear, bio: p.bio, role: "student", suspendedUntil: null, deletedAt: null, createdAt: new Date(now.getTime() - 90 * 86400_000).toISOString(),
+    },
+    trip: r.targetType === "trip" ? { id: "t2", destinationName: "Target (Montclair)", departsAt: new Date(now.getTime() + 24 * 3600_000).toISOString(), status: "open" } : r.reason === "No-show" ? { id: "t9", destinationName: "Target (Upland)", departsAt: new Date(now.getTime() - 24 * 3600_000).toISOString(), status: "past" } : null,
+    message: null,
+    otherReports: all.filter((o) => o.targetUserId === r.targetUserId && o.id !== r.id).map((o) => ({ id: o.id, reason: o.reason, status: o.status, createdAt: o.createdAt })),
+    noShowCount: r.noShowCount,
+  };
+}
+export function demoMeetupPoints(): AdminPoint[] {
+  const p = (id: string, campusId: string, name: string, type: string, shared: boolean, status: AdminPoint["status"], standAt: string | null, used: number): AdminPoint =>
+    ({ id, campusId, name, type, lat: 34.106, lng: -117.709, shared, status, standAt, tripsUsing: used });
+  return [
+    p("p1", "hmc", "Platt Campus Center", "hub", false, "approved", "DEV PLACEHOLDER: stand at the front steps.", 4),
+    p("p2", "hmc", "Hoch-Shanahan Dining Commons", "hub", false, "approved", "DEV PLACEHOLDER: stand at the main doors.", 1),
+    p("p3", "hmc", "Honnold/Mudd Library", "shared", true, "approved", "DEV PLACEHOLDER: stand by the bike racks.", 2),
+    p("p4", "pomona", "Smith Campus Center", "hub", true, "approved", "DEV PLACEHOLDER: stand by the fountain.", 6),
+    p("p5", "scripps", "Balch Hall", "hub", true, "suspended", "DEV PLACEHOLDER: stand at the entrance gate.", 1),
+  ];
+}
+export function demoAuditLog(now: Date): AuditRow[] {
+  const at = (h: number) => new Date(now.getTime() - h * 3600_000).toISOString();
+  return [
+    { id: 6, createdAt: at(1), actorFirstName: "Admin", action: "view_report", target: "a1", details: { target_user: "d2" } },
+    { id: 5, createdAt: at(1), actorFirstName: "Admin", action: "view_profile", target: "d2", details: { report: "a1" } },
+    { id: 4, createdAt: at(20), actorFirstName: "Admin", action: "meetup_point_suspended", target: "p5", details: {} },
+    { id: 3, createdAt: at(30), actorFirstName: "Admin", action: "warn_user", target: "d5", details: { report: "a4" } },
+    { id: 2, createdAt: at(52), actorFirstName: "Admin", action: "report_dismissed", target: "a5", details: {} },
+    { id: 1, createdAt: at(70), actorFirstName: "Admin", action: "add_meetup_point", target: "p4", details: { name: "Smith Campus Center", campus: "pomona" } },
   ];
 }

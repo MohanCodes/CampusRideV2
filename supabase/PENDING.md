@@ -66,3 +66,12 @@ the nine jobs exist: `expire_seat_requests`, `expire_ride_requests`, `expire_off
 `mark_trips_past`, `meetup_reminders`, `request_ending_soon`, `matching_nudges`, `drain_email_outbox`, `purge_old_data`.
 
 Email footers link to `/me` (notification settings) and `/safety`; those pages arrive in Step 11.
+
+## Step 10: moderation
+
+- **Admins are set by hand.** There is no screen for it. In the Supabase SQL editor on each project, run
+  `update profiles set role = 'admin' where id = '<user id>';` for the one or two people who review reports.
+- **Daily digest.** `admin_report_digest` runs at 16:00 UTC and emails every admin when reports are waiting. It needs the
+  email pipeline from Step 9 (Vault secrets, Resend) to deliver anything.
+- **Removing an account** clears the profile and cancels what's ahead through `deactivate_account`. Deleting the person's
+  sign-in and avatar file needs the `delete-account` Edge Function, which comes in Step 11.

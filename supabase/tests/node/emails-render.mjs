@@ -1,5 +1,5 @@
 // The contract between the database and the Edge Function: rows claimed through the real claim_emails()
-// render properly with the real templates. For each of the 20 templates, this creates realistic data and
+// render properly with the real templates. For each of the 21 templates, this creates realistic data and
 // an outbox row shaped like the one the real function queues, claims it, renders it, and checks that no
 // email fell back to a generic placeholder. It reads DATABASE_URL (default: the local Supabase database).
 import { startRun } from "../race/_helpers.mjs";
@@ -44,6 +44,7 @@ try {
     ["report_received", rider, {}],
     ["account_warning", rider, {}],
     ["account_suspended", rider, { until: "2026-11-01" }],
+    ["admin_digest", rider, {}],
   ];
   await admin.query("delete from email_outbox where to_user_id = any($1)", [[driver, rider]]);
   let n = 0;
@@ -53,7 +54,7 @@ try {
 
   const claimed = (await admin.query("select * from claim_emails(100) where to_user_id = any($1)", [[driver, rider]])).rows;
   check(claimed.length === rows.length, `all ${rows.length} rows were claimed (got ${claimed.length})`);
-  check(new Set(rows.map((r) => r[0])).size === TEMPLATE_NAMES.length, "every one of the 20 templates is covered");
+  check(new Set(rows.map((r) => r[0])).size === TEMPLATE_NAMES.length, "every one of the 21 templates is covered");
 
   const now = new Date();
   for (const c of claimed) {
@@ -66,10 +67,10 @@ try {
     check(c.to_email.endsWith("@pomona.edu"), `${label}: has the recipient's address`);
     check(r.text.startsWith(`Hi ${c.to_first_name},`), `${label}: greets by first name`);
     check(c.context.link_path?.startsWith("/"), `${label}: has a link to a page (${c.context.link_path})`);
-    const needsOther = !["request_expired", "request_ending_soon", "report_received", "account_warning", "account_suspended", "meetup_reminder"].includes(c.template)
+    const needsOther = !["request_expired", "request_ending_soon", "report_received", "account_warning", "account_suspended", "admin_digest", "meetup_reminder"].includes(c.template)
       && !(c.template === "request_expired");
     if (needsOther) check(!all.includes("Someone"), `${label}: names the other person, not "Someone"`);
-    if (!["report_received", "account_warning", "account_suspended"].includes(c.template)) {
+    if (!["report_received", "account_warning", "account_suspended", "admin_digest"].includes(c.template)) {
       check(all.includes("Trader Joe") || all.includes("Race trip"), `${label}: says where the trip goes (no generic "your trip")`);
       check(!/your trip, |^your trip$/m.test(all) || c.template === "meetup_reminder", `${label}: no placeholder destination`);
     }

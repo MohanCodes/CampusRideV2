@@ -4,6 +4,7 @@ import { BottomNav, DesktopNav, type NavItem } from "@/components/NavLinks";
 import { Logo } from "@/components/Logo";
 import { SafetyNotice } from "@/components/SafetyNotice";
 import { signOut } from "@/lib/auth/actions";
+import { isAdmin } from "@/lib/auth/dal";
 import { getInboxCount } from "@/lib/data/rides";
 import { FEATURES } from "@/lib/features";
 
@@ -26,6 +27,9 @@ export async function AppShell({
   // The Inbox badge counts seat requests waiting for an answer.
   const waiting = FEATURES.inbox && (signedIn || demo) ? await getInboxCount() : 0;
   const items = NAV.map((n) => (n.href === "/inbox" ? { ...n, badge: waiting } : n));
+  // Admins also get an Admin link in the header. (The pages check the role themselves.)
+  const showAdmin = FEATURES.admin && (demo || (signedIn && (await isAdmin())));
+  const headerItems = showAdmin ? [...items, { href: "/admin", label: "Admin", icon: "shield" as const }] : items;
   return (
     <>
       {demo && (
@@ -37,7 +41,7 @@ export async function AppShell({
         <div className="mx-auto flex h-[78px] max-w-[1180px] items-center justify-between gap-4 px-4 sm:px-[25px] md:h-[92px]">
           <Logo />
           <nav aria-label="Main navigation" className="flex items-center gap-2 sm:gap-6">
-            {NAV.length > 1 && <DesktopNav items={items} />}
+            {(NAV.length > 1 || showAdmin) && <DesktopNav items={headerItems} />}
             {signedIn ? (
               <form action={signOut}>
                 <button type="submit" className="btn-secondary">

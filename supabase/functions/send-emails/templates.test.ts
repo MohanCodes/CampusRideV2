@@ -14,9 +14,9 @@ const email = (template: string, over: Partial<EmailContext> = {}, to_first_name
   ({ id: 1, to_email: "alex@pomona.edu", to_first_name, template, context: ctx(over) });
 
 describe("every template in BUILD.md Section 8.2", () => {
-  it("is covered: 20 templates, including rider_cancelled", () => {
-    expect(TEMPLATE_NAMES).toHaveLength(20);
-    expect(new Set(TEMPLATE_NAMES).size).toBe(20);
+  it("is covered: 21 templates, including rider_cancelled", () => {
+    expect(TEMPLATE_NAMES).toHaveLength(21);
+    expect(new Set(TEMPLATE_NAMES).size).toBe(21);
   });
 
   for (const template of TEMPLATE_NAMES) {
@@ -24,6 +24,7 @@ describe("every template in BUILD.md Section 8.2", () => {
       const extra: Partial<EmailContext> =
         template === "meetup_reminder" ? { link_path: "/chat/c1" } :
         template === "account_suspended" ? { until: "2026-11-01" } :
+        template === "admin_digest" ? { link_path: "/admin/reports", count: 3 } :
         template === "request_ending_soon" ? { window_end: "2026-10-17T21:00:00Z" } : {};
       const r = renderEmail(email(template, extra), OPTS);
 

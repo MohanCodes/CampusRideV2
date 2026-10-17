@@ -62,8 +62,26 @@ try {
     const sql = read(`supabase/tests/${file}`).replace("select * from finish();", "").replace(/^rollback;$/m, "");
     const planned = Number(/select plan\((\d+)\)/.exec(sql)[1]);
     process.stdout.write(`${file}: `);
+    if (process.env.BISECT) {
+      // Debug aid: run the file one commented section at a time and name the first section that errors.
+      const marks = [...sql.matchAll(/^-- .*-{10,}$/gm)].map((m) => m.index);
+      for (let i = 1; i <= marks.length; i++) {
+        const prefix = sql.slice(0, marks[i] ?? sql.length);
+        try { await client.query(prefix + "\nrollback;"); }
+        catch (e) { console.log(`first error is in the section ending before: ${sql.slice(marks[i - 1], marks[i - 1] + 90).split("\n")[0]}\n  ${e.message}`); await client.query("rollback").catch(() => {}); break; }
+        await client.query("rollback").catch(() => {});
+      }
+      continue;
+    }
     try { await client.query(sql); }
-    catch (e) { fail(`ERROR while running: ${e.message}`); await client.query("rollback"); continue; }
+    catch (e) {
+      fail(`ERROR while running: ${e.message}`);
+      // Postgres reports where in the file the error happened (inside a function, it points at the call).
+      if (e.position) console.log(`  near: ${sql.slice(Math.max(0, Number(e.position) - 160), Number(e.position) + 120).replace(/\s+/g, " ")}`);
+      if (e.where) console.log(`  where: ${e.where.split("\n")[0]}`);
+      await client.query("rollback");
+      continue;
+    }
     const rows = (await client.query("select n, ok, d from shim.results order by n")).rows;
     await client.query("reset role; rollback;");
     const bad = rows.filter((r) => !r.ok);

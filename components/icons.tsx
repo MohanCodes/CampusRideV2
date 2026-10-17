@@ -16,6 +16,7 @@ const PATHS: Record<string, ReactNode> = {
   list: <path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" />,
   inbox: (<><path d="M4 13l2.2-7a1 1 0 0 1 1-.7h9.6a1 1 0 0 1 1 .7L20 13" /><path d="M4 13v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5h-4.5a2.5 2.5 0 0 1-5 0z" /></>),
   user: (<><circle cx="12" cy="8.5" r="3.5" /><path d="M5 20a7 7 0 0 1 14 0" /></>),
+  shield: <path d="M12 3l7 3v5.5c0 4.2-2.8 7.6-7 9.5-4.2-1.9-7-5.3-7-9.5V6z" />,
   users: (<><circle cx="9" cy="9" r="3" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><path d="M16 6.3a3 3 0 0 1 0 5.4M17.5 14a5.5 5.5 0 0 1 3 5" /></>),
 };
 

@@ -18,6 +18,7 @@ export type EmailContext = {
   meetup_point?: string;
   reason?: string;
   until?: string;
+  count?: number;
 };
 
 export type ClaimedEmail = {
@@ -36,6 +37,7 @@ export const TEMPLATE_NAMES = [
   "rider_cancelled", "offer_received", "offer_accepted", "offer_declined", "offer_closed", "offer_withdrawn",
   "match_for_rider", "match_for_driver", "request_ending_soon", "meetup_reminder", "new_message",
   "report_received", "account_warning", "account_suspended",
+  "admin_digest",
 ] as const;
 
 // The campus colors from WEB_FLOWS.md Section 7 (Light). Email can't use CSS variables, so these are the
@@ -131,6 +133,10 @@ function body(c: ClaimedEmail["context"], template: string, o: RenderOptions): B
       return { subject: "A note about your account", lines: ["We received a report about your recent activity.", "Please meet at approved spots, be on time, and report anything off. More reports may pause your account."], button: "Open CampusRide" };
     case "account_suspended":
       return { subject: "Your account is paused", lines: [c.until ? `Your account is paused until ${c.until}.` : "Your account is paused.", "You can still sign in and read, but you can't post, ask for a seat, or send messages."], button: "Open CampusRide" };
+    case "admin_digest": {
+      const n = c.count ?? 0;
+      return { subject: `${n} ${n === 1 ? "report is" : "reports are"} waiting`, lines: [`${n} ${n === 1 ? "report is" : "reports are"} waiting for review.`], button: "Open the queue" };
+    }
     default:
       throw new Error(`unknown email template: ${template}`);
   }

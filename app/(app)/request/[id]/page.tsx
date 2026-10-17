@@ -5,6 +5,8 @@ import { Icon } from "@/components/icons";
 import { OfferCard } from "@/components/request/OfferCard";
 import { OfferRideDialog } from "@/components/request/OfferRideDialog";
 import { RequestOwnActions } from "@/components/request/RequestOwnActions";
+import { SafetyMenu } from "@/components/safety/SafetyMenu";
+import { FEATURES } from "@/lib/features";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ErrorState } from "@/components/states";
 import { Toast } from "@/components/Toast";
@@ -43,10 +45,13 @@ export default async function RequestPage({ params, searchParams }: PageProps<"/
       {one(sp.posted) === "1" && <Toast message="Request posted. Drivers going your way will see it." />}
       {one(sp.offered) === "1" && <Toast message={`Offer sent. We'll let ${r.rider.firstName} know.`} />}
 
-      <Link href="/?tab=requests" className="mt-2 inline-flex min-h-[44px] items-center gap-1 text-sm">
-        <Icon name="back" size={16} />
-        In search of
-      </Link>
+      <div className="mt-2 flex items-center justify-between gap-3">
+        <Link href="/?tab=requests" className="inline-flex min-h-[44px] items-center gap-1 text-sm">
+          <Icon name="back" size={16} />
+          In search of
+        </Link>
+        {FEATURES.report && !d.isOwn && <SafetyMenu target={{ type: "request", id: r.id }} noun="request" person={{ id: r.rider.id, firstName: r.rider.firstName }} />}
+      </div>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
         <div className="min-w-0">
@@ -73,7 +78,7 @@ export default async function RequestPage({ params, searchParams }: PageProps<"/
               <p className="mt-1 text-sm text-muted">The exact spot is shared once a ride is accepted.</p>
             </Row>
             {r.note && <Row label="Note"><p>{r.note}</p></Row>}
-            <Row label="Rider" className="lg:hidden"><UserRow person={r.rider} size={44} /></Row>
+            <Row label="Rider" className="lg:hidden"><UserRow person={r.rider} size={44} linked /></Row>
           </dl>
 
           {d.isOwn && open && (
@@ -109,7 +114,7 @@ export default async function RequestPage({ params, searchParams }: PageProps<"/
         <aside aria-label="Rider and actions" className="lg:pt-[72px]">
           <div className="card hidden p-4 lg:block">
             <p className="t-label mb-3 text-muted">Rider</p>
-            <UserRow person={r.rider} size={44} />
+            <UserRow person={r.rider} size={44} linked />
           </div>
 
           <div data-testid="request-actions" className="mt-4 space-y-3">

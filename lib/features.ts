@@ -8,6 +8,8 @@ export const FEATURES = {
   chat: true,        // Step 7
   inSearchOf: true,  // Step 8: asking for a ride and offering one
   profile: false,    // Step 10 and 11
-  report: false,     // Step 10
+  report: true,      // Step 10: report and block
+  userProfile: true, // Step 10: other people's profiles
+  admin: true,       // Step 10: admin pages
   safetyPage: false, // Step 11
 } as const;
