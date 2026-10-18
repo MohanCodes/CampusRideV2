@@ -122,7 +122,7 @@
 /* Type scale: WEB_FLOWS.md Section 7. Sizes are rem so they scale with the user's setting. */
 @layer components {
   .t-display {
-    font-size: clamp(3.6rem, 5.4vw, 5rem);
+    font-size: clamp(3.6rem, 6.4vw, 5.5rem);
     font-weight: 500;
     line-height: 1.01;
     letter-spacing: -0.045em;

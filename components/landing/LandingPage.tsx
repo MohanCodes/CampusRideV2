@@ -87,7 +87,7 @@ export function LandingPage() {
 
       <main id="main">
         {/* Hero */}
-        <section className="mx-4 max-w-[1320px] overflow-hidden rounded-[28px] bg-mint px-6 pt-12 sm:mx-6 md:px-16 md:pt-[72px] min-[1368px]:mx-auto">
+        <section className="mx-auto w-[calc(100%-2rem)] max-w-[1320px] overflow-hidden rounded-[28px] bg-mint px-6 pt-12 sm:w-[calc(100%-3rem)] md:px-16 md:pt-[72px]">
           <div className="grid items-center gap-10 md:grid-cols-[1.1fr_1fr]">
             <div className="text-center">
               <Eyebrow center>For students at the 5Cs</Eyebrow>
