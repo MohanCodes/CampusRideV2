@@ -26,13 +26,14 @@ export default async function AskPage({ searchParams }: PageProps<"/post/ask">) 
 
   return (
     <AppShell signedIn={signedIn} demo={demo}>
+      <div className="mx-auto max-w-[640px]">
       <Link href="/post" className="mt-2 inline-flex min-h-[44px] items-center gap-1 text-sm">
         <Icon name="back" size={16} />
         Post
       </Link>
       <h1 className="t-h1 mb-2 text-[2.4rem] md:text-[3rem]">Ask for a ride</h1>
       <p className="mb-6 max-w-[56ch] text-muted">Tell drivers where you need to go. Anyone heading your way can offer you a seat.</p>
-      <div className="max-w-[640px]">
+      <div>
         {res.ok ? (
           <AskForm
             places={res.data.places}
@@ -45,6 +46,7 @@ export default async function AskPage({ searchParams }: PageProps<"/post/ask">) 
         ) : (
           <ErrorState message="We couldn't load the form. Check your connection and try again." href="/post/ask" />
         )}
+      </div>
       </div>
     </AppShell>
   );

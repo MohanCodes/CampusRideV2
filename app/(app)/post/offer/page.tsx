@@ -40,17 +40,18 @@ export default async function OfferPage({ searchParams }: PageProps<"/post/offer
 
   return (
     <AppShell signedIn={signedIn} demo={demo}>
+      <div className="mx-auto max-w-[640px]">
       <Link href="/post" className="mt-2 inline-flex min-h-[44px] items-center gap-1 text-sm">
         <Icon name="back" size={16} />
         Post
       </Link>
       <h1 className="t-h1 mb-6 text-[2.4rem] md:text-[3rem]">Offer a ride</h1>
       {answering && (
-        <p role="note" data-testid="answering" className="card mb-6 max-w-[640px] p-4">
+        <p role="note" data-testid="answering" className="card mb-6 p-4">
           You&apos;re answering <strong>{answering.rider.firstName}</strong>&apos;s request to {answering.destinationName}. When you post this trip, we&apos;ll send your offer.
         </p>
       )}
-      <div className="max-w-[640px]">
+      <div>
         {res.ok ? (
           <OfferForm
             places={res.data.places}
@@ -63,6 +64,7 @@ export default async function OfferPage({ searchParams }: PageProps<"/post/offer
         ) : (
           <ErrorState message="We couldn't load the form. Check your connection and try again." href="/post/offer" />
         )}
+      </div>
       </div>
     </AppShell>
   );
