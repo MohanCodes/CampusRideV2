@@ -56,7 +56,7 @@ export function AskForm({ places, points, campusId, defaults, nowIso, maxDate }:
   const reason = !destination ? "Pick where you're going." : !pointId ? "Pick a meetup point." : timeError ?? noteWarn ?? (!date || !time ? "Pick a date and time." : null);
 
   return (
-    <form action={action} className="space-y-8" noValidate>
+    <form action={action} className="grid gap-x-12 gap-y-8 lg:grid-cols-2" noValidate>
       <input type="hidden" name="destinationKind" value={destination?.kind ?? ""} />
       <input type="hidden" name="placeId" value={destination?.kind === "place" ? destination.placeId : ""} />
       <input type="hidden" name="mapboxId" value={destination?.kind === "other" ? destination.mapboxId : ""} />
@@ -64,7 +64,13 @@ export function AskForm({ places, points, campusId, defaults, nowIso, maxDate }:
       <input type="hidden" name="meetupPointId" value={pointId} />
       <input type="hidden" name="seats" value={seats} />
 
+<div className="space-y-8">
       <DestinationPicker places={places} value={destination} onChange={setDestination} error={fields.destination} />
+
+      <MeetupPointPicker points={points} campusId={campusId} value={pointId} onChange={setPointId} error={fields.meetupPointId} />
+</div>
+
+<div className="space-y-8">
 
       <fieldset>
         <legend className="mb-2 text-sm font-bold">When</legend>
@@ -95,7 +101,6 @@ export function AskForm({ places, points, campusId, defaults, nowIso, maxDate }:
         <p className="mt-1 text-sm text-muted">Up to 3.</p>
       </div>
 
-      <MeetupPointPicker points={points} campusId={campusId} value={pointId} onChange={setPointId} error={fields.meetupPointId} />
 
       <div>
         <label className="card flex min-h-[48px] cursor-pointer items-start gap-3 px-4 py-3">
@@ -116,7 +121,10 @@ export function AskForm({ places, points, campusId, defaults, nowIso, maxDate }:
         </p>
       </div>
 
-      {state.status === "error" && state.message && !Object.keys(fields).length && <p role="alert" className="field-error">{state.message}</p>}
+      </div>
+
+<div className="space-y-8 lg:col-span-2">
+{state.status === "error" && state.message && !Object.keys(fields).length && <p role="alert" className="field-error">{state.message}</p>}
 
       <div>
         <div className="flex flex-wrap items-center gap-3">
@@ -128,6 +136,7 @@ export function AskForm({ places, points, campusId, defaults, nowIso, maxDate }:
         {!ready && reason && <p className="mt-2 text-sm text-muted" data-testid="disabled-reason">{reason}</p>}
         <p className="mt-2 text-sm text-muted">You can have up to 2 open requests.</p>
       </div>
-    </form>
+    </div>
+</form>
   );
 }

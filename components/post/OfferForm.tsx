@@ -78,7 +78,7 @@ export function OfferForm({ places, points, campusId, defaults, nowIso, forReque
           if (confirmOverlap) fd.set("confirmOverlap", "1");
           action(fd);
         }}
-        className="space-y-8"
+        className="grid gap-x-12 gap-y-8 lg:grid-cols-2"
         noValidate
       >
         <input type="hidden" name="destinationKind" value={destination?.kind ?? ""} />
@@ -89,7 +89,13 @@ export function OfferForm({ places, points, campusId, defaults, nowIso, forReque
         <input type="hidden" name="seats" value={seats} />
         {forRequest && <input type="hidden" name="forRequest" value={forRequest.id} />}
 
+<div className="space-y-8">
         <DestinationPicker places={places} value={destination} onChange={setDestination} error={fieldErrors.destination} />
+
+        <MeetupPointPicker points={points} campusId={campusId} value={pointId} onChange={setPointId} error={fieldErrors.meetupPointId} />
+</div>
+
+<div className="space-y-8">
 
         <fieldset>
           <legend className="mb-2 text-sm font-bold">When</legend>
@@ -121,7 +127,6 @@ export function OfferForm({ places, points, campusId, defaults, nowIso, forReque
           <p className="mt-1 text-sm text-muted">Up to 6.</p>
         </div>
 
-        <MeetupPointPicker points={points} campusId={campusId} value={pointId} onChange={setPointId} error={fieldErrors.meetupPointId} />
 
         <fieldset>
           <legend className="mb-2 text-sm font-bold">Car</legend>
@@ -149,7 +154,10 @@ export function OfferForm({ places, points, campusId, defaults, nowIso, forReque
           </p>
         </div>
 
-        {state.status === "overlap" && (
+        </div>
+
+<div className="space-y-8 lg:col-span-2">
+{state.status === "overlap" && (
           <div role="alert" data-testid="overlap" className="card border-danger p-4">
             <p className="font-bold">You already have a trip at this time.</p>
             <p className="mt-1 text-sm text-muted">Edit this trip, or post it anyway.</p>
@@ -170,7 +178,8 @@ export function OfferForm({ places, points, campusId, defaults, nowIso, forReque
           </div>
           {!ready && disabledReason && <p className="mt-2 text-sm text-muted" data-testid="disabled-reason">{disabledReason}</p>}
         </div>
-      </form>
+      </div>
+</form>
 
       <dialog ref={dialog} aria-labelledby="discard-title" className="card m-auto max-w-[420px] p-6 backdrop:bg-black/40">
         <h2 id="discard-title" className="t-h2">Discard this trip?</h2>

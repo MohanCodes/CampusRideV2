@@ -26,7 +26,6 @@ export default async function AskPage({ searchParams }: PageProps<"/post/ask">) 
 
   return (
     <AppShell signedIn={signedIn} demo={demo}>
-      <div className="mx-auto max-w-[640px]">
       <Link href="/post" className="mt-2 inline-flex min-h-[44px] items-center gap-1 text-sm">
         <Icon name="back" size={16} />
         Post
@@ -46,7 +45,6 @@ export default async function AskPage({ searchParams }: PageProps<"/post/ask">) 
         ) : (
           <ErrorState message="We couldn't load the form. Check your connection and try again." href="/post/ask" />
         )}
-      </div>
       </div>
     </AppShell>
   );
