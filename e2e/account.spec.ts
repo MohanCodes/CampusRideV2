@@ -117,3 +117,41 @@ test("none of these pages scroll sideways", async ({ page }) => {
     expect(await noSideScroll(page), p).toBeLessThanOrEqual(0);
   }
 });
+
+test.describe("the profile photo", () => {
+  test("a big phone photo is shrunk in the browser before it is sent", async ({ page }) => {
+    await page.goto("/onboarding");
+    // Build a large, noisy photo (a few MB) the way a phone camera would.
+    const big = await page.evaluate(async () => {
+      const c = document.createElement("canvas");
+      c.width = 4000; c.height = 3000;
+      const ctx = c.getContext("2d")!;
+      const img = ctx.createImageData(c.width, c.height);
+      for (let i = 0; i < img.data.length; i += 4) { img.data[i] = Math.random() * 255; img.data[i + 1] = Math.random() * 255; img.data[i + 2] = Math.random() * 255; img.data[i + 3] = 255; }
+      ctx.putImageData(img, 0, 0);
+      const blob: Blob = await new Promise((r) => c.toBlob((b) => r(b!), "image/png"));
+      const buf = new Uint8Array(await blob.arrayBuffer());
+      let s = ""; for (let i = 0; i < buf.length; i += 0x8000) s += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+      return btoa(s);
+    });
+    const bytes = Buffer.from(big, "base64");
+    expect(bytes.length).toBeGreaterThan(4 * 1024 * 1024);
+    await page.locator("#photo").setInputFiles({ name: "IMG_0001.png", mimeType: "image/png", buffer: bytes });
+    await expect.poll(() => page.locator("#photo").evaluate((el: HTMLInputElement) => el.files![0].size)).toBeLessThan(1024 * 1024);
+    const result = await page.locator("#photo").evaluate(async (el: HTMLInputElement) => {
+      const f = el.files![0];
+      const bmp = await createImageBitmap(f);
+      return { type: f.type, w: bmp.width, h: bmp.height };
+    });
+    expect(result.type).toBe("image/jpeg");
+    expect(Math.max(result.w, result.h)).toBe(1024);
+    expect(result.w / result.h).toBeCloseTo(4 / 3, 1);
+  });
+
+  test("a small photo is left as it is", async ({ page }) => {
+    await page.goto("/onboarding");
+    const tiny = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+    await page.locator("#photo").setInputFiles({ name: "tiny.png", mimeType: "image/png", buffer: tiny });
+    await expect.poll(() => page.locator("#photo").evaluate((el: HTMLInputElement) => el.files![0].name)).toBe("tiny.png");
+  });
+});

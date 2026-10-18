@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
   // The browser sees the DSN too (it is not a secret). Setting it under a NEXT_PUBLIC name is what puts it in the bundle.
   env: { NEXT_PUBLIC_SENTRY_DSN: process.env.SENTRY_DSN ?? "" },
   poweredByHeader: false,
+  // The profile photo is shrunk in the browser first (lib/shrink-image.ts); this leaves room under Vercel's 4.5 MB request limit.
+  experimental: { serverActions: { bodySizeLimit: "4mb" } },
   // Headers that don't change per request. The Content-Security-Policy does (it carries a nonce), so proxy.ts sets it.
   async headers() {
     const headers = [

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { OnboardingForm } from "@/components/auth/OnboardingForm";
 import { getMyProfile, requireUser } from "@/lib/auth/dal";
+import { isDemo } from "@/lib/demo";
 import { safeNext } from "@/lib/routes";
 import { createClient } from "@/lib/supabase/server";
 
@@ -12,13 +13,13 @@ export default async function OnboardingPage({ searchParams }: PageProps<"/onboa
   const raw = params.next;
   const next = safeNext(Array.isArray(raw) ? raw[0] : raw);
 
-  await requireUser("/onboarding" + (next === "/" ? "" : `?next=${encodeURIComponent(next)}`));
+  if (!isDemo()) await requireUser("/onboarding" + (next === "/" ? "" : `?next=${encodeURIComponent(next)}`));
   const profile = await getMyProfile();
   if (profile?.onboarded_at) redirect(next);
 
   const supabase = await createClient();
-  const { data: campus } = profile
-    ? await supabase!.from("campuses").select("id, name").eq("id", profile.campus_id).maybeSingle()
+  const { data: campus } = profile && supabase
+    ? await supabase.from("campuses").select("id, name").eq("id", profile.campus_id).maybeSingle()
     : { data: null };
 
   const thisYear = new Date().getFullYear();

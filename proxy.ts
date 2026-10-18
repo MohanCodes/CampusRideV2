@@ -19,7 +19,7 @@ export async function proxy(request: NextRequest) {
   response.headers.set("Content-Security-Policy", csp);
   const { pathname, search } = request.nextUrl;
   // Demo mode (sample data, no backend) also opens the trip, post, rides, inbox, chat, request, profile and admin pages so the screens can be reviewed.
-  const demoOpen = isDemo() && ["/trip/", "/post", "/rides", "/inbox", "/chat/", "/request/", "/user/", "/admin", "/me"].some((p) => pathname.startsWith(p));
+  const demoOpen = isDemo() && ["/trip/", "/post", "/rides", "/inbox", "/chat/", "/request/", "/user/", "/admin", "/me", "/onboarding"].some((p) => pathname.startsWith(p));
   if (!signedIn && !demoOpen && isProtectedPath(pathname)) {
     const redirect = NextResponse.redirect(new URL(signInUrl(pathname, search), request.url));
     redirect.headers.set("Content-Security-Policy", csp);

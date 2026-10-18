@@ -7,6 +7,7 @@ import {
   type FinishState,
   type ProfileStepState,
 } from "@/app/onboarding/actions";
+import { shrinkPhoto } from "@/lib/shrink-image";
 
 type Defaults = { firstName: string; lastName: string; classYear: string; bio: string; hasPhoto: boolean };
 
@@ -98,9 +99,18 @@ export function OnboardingForm({
                 className="field !py-[9px] text-sm"
                 aria-invalid={fields.photo ? true : undefined}
                 aria-describedby="photo-help"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  setPreview(f ? URL.createObjectURL(f) : null);
+                onChange={async (e) => {
+                  const input = e.target;
+                  const f = input.files?.[0];
+                  if (!f) return setPreview(null);
+                  setPreview(URL.createObjectURL(f));
+                  // Shrink in the browser so a big phone photo can still be sent, then swap it into the form.
+                  const small = await shrinkPhoto(f);
+                  if (small !== f) {
+                    const list = new DataTransfer();
+                    list.items.add(small);
+                    input.files = list.files;
+                  }
                 }}
               />
             </div>
