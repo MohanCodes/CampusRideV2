@@ -88,28 +88,28 @@ export function LandingPage() {
       <main id="main">
         {/* Hero */}
         <section className="mx-auto w-[calc(100%-2rem)] max-w-[1320px] overflow-hidden rounded-[28px] bg-mint px-6 pt-12 sm:w-[calc(100%-3rem)] md:px-16 md:pt-[72px]">
-          <div className="grid items-center gap-6">
-            <div className="text-center">
-              <Eyebrow center>For students at the 5Cs</Eyebrow>
+          <div className="grid items-center gap-10 md:grid-cols-[1.1fr_1fr]">
+            <div>
+              <Eyebrow>For students at the 5Cs</Eyebrow>
               <h1 className="t-display mb-[25px] mt-[29px]">
                 Same direction.
                 <br />
                 <em className="font-serif font-normal">Better together.</em>
               </h1>
-              <p className="mx-auto max-w-[435px] text-lg text-muted">
+              <p className="max-w-[435px] text-lg text-muted">
                 Rides with students you can trust. Find someone already heading your way, then
                 choose an approved public place to meet.
               </p>
               <a href="#how" className="btn-primary mt-[18px]">
                 See how it works <span aria-hidden="true">↗</span>
               </a>
-              <p className="t-small mb-6 mt-[17px] text-muted">Built by students.</p>
+              <p className="t-small mb-[45px] mt-[17px] text-muted">Built by students.</p>
             </div>
 
             <div
               role="img"
               aria-label="Illustration of the CampusRide board showing two trips: Trader Joe's and Ontario Airport"
-              className="relative mx-auto grid min-h-[440px] w-full max-w-[560px] place-items-center md:min-h-[488px]"
+              className="relative grid min-h-[440px] place-items-center md:min-h-[488px]"
             >
               <div
                 aria-hidden="true"
