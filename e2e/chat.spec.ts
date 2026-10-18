@@ -18,7 +18,7 @@ test.describe("a chat", () => {
     const items = log(page).locator("[data-kind]");
     await expect(items).toHaveCount(4);
     await expect(items.nth(0)).toHaveAttribute("data-kind", "system");
-    await expect(items.nth(0)).toHaveText("Sam accepted Riley. You can plan the pickup here.");
+    await expect(items.nth(0)).toHaveText("Sam accepted you. You can plan the pickup here.");
     await expect(items.nth(1)).toContainText("Hi! I'll be in a green Subaru Outback.");
     await expect(items.nth(3)).toContainText("Running 5 min late, sorry!");
   });
@@ -163,5 +163,17 @@ test.describe("Message links", () => {
     await page.goto("/trip/t10");
     await expect(page.getByRole("link", { name: "Message Jordan" })).toHaveAttribute("href", "/chat/c2");
     await expect(page.getByRole("link", { name: /Message Alex/ })).toHaveCount(0); // not accepted yet
+  });
+});
+
+test.describe("notices in a chat are worded for the reader", () => {
+  test("the driver who accepted reads 'You accepted …'", async ({ page }) => {
+    await page.goto("/chat/c2");
+    await expect(log(page).locator("[data-kind=system]").first()).toHaveText("You accepted Jordan. You can plan the pickup here.");
+  });
+  test("the Inbox preview uses the same wording", async ({ page }) => {
+    await page.goto("/inbox");
+    // No preview shows a notice with the viewer's own name in the third person.
+    await expect(page.getByRole("main")).not.toContainText("Riley accepted");
   });
 });

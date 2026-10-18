@@ -1,5 +1,6 @@
 "use client";
 
+import { personalizeSystemMessage } from "@/lib/chat/system-message";
 import { useEffect, useRef, useState } from "react";
 import { fetchNewMessages, getChatToken, markChatRead, sendChatMessage } from "@/app/(app)/chat/[id]/actions";
 import { toMessage } from "@/lib/actions/chat";
@@ -124,7 +125,7 @@ export function ChatThread({ conversationId, initial, meId, nowIso, live, demo, 
               {showDay && <p className="t-label my-3 text-center text-muted">{formatDay(m.createdAt, now)}</p>}
               {m.kind === "system" ? (
                 <p data-kind="system" className="mx-auto max-w-[44ch] border-y border-line py-2 text-center text-sm text-muted">
-                  {m.body}
+                  {personalizeSystemMessage(m.body, m.senderId === meId)}
                 </p>
               ) : (
                 <div className={`flex flex-col ${m.senderId === meId ? "items-end" : "items-start"}`} data-kind="user" data-mine={m.senderId === meId}>

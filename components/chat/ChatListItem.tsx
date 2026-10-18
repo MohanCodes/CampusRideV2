@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
+import { personalizeSystemMessage } from "@/lib/chat/system-message";
 import type { ChatThread } from "@/lib/data/types";
 import { formatDeparture } from "@/lib/format/time";
 
@@ -7,7 +8,7 @@ import { formatDeparture } from "@/lib/format/time";
 export function ChatListItem({ thread, now }: { thread: ChatThread; now: Date }) {
   const closed = new Date(thread.closesAt) <= now;
   const preview = thread.lastBody
-    ? thread.lastKind === "system" ? thread.lastBody : `${thread.lastFromMe ? "You: " : ""}${thread.lastBody}`
+    ? thread.lastKind === "system" ? personalizeSystemMessage(thread.lastBody, thread.lastFromMe) : `${thread.lastFromMe ? "You: " : ""}${thread.lastBody}`
     : "No messages yet";
   return (
     <li data-testid="chat-row" className="card relative p-4 transition-colors hover:border-green">
