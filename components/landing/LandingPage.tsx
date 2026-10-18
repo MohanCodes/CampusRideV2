@@ -103,13 +103,13 @@ export function LandingPage() {
               <a href="#how" className="btn-primary mt-[18px]">
                 See how it works <span aria-hidden="true">↗</span>
               </a>
-              <p className="t-small mb-[45px] mt-[17px] text-muted">Built by students.</p>
+              <p className="t-small mb-6 mt-[17px] text-muted min-[651px]:mb-[45px]">Built by students.</p>
             </div>
 
             <div
               role="img"
               aria-label="Illustration of the CampusRide board showing two trips: Trader Joe's and Ontario Airport"
-              className="relative grid min-h-[440px] place-items-center md:min-h-[488px]"
+              className="relative hidden min-h-[440px] place-items-center min-[651px]:grid md:min-h-[488px]"
             >
               <div
                 aria-hidden="true"
