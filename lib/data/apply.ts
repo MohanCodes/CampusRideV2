@@ -1,5 +1,4 @@
-import { CAMPUS_TZ } from "@/lib/campuses";
-import { dateRange, type BoardFilters } from "./filters";
+import type { BoardFilters } from "./filters";
 import type { RequestCardData, TripCardData } from "./types";
 
 // The same rules the database queries use, written once as plain code. Demo mode runs these
@@ -7,32 +6,27 @@ import type { RequestCardData, TripCardData } from "./types";
 const matchesText = (q: string, ...fields: (string | null)[]) =>
   !q || fields.some((f) => f?.toLowerCase().includes(q.toLowerCase()));
 
-export function applyTripFilters(trips: TripCardData[], f: BoardFilters, now: Date, tz = CAMPUS_TZ): TripCardData[] {
-  const { from, to } = dateRange(f.date, now, tz);
+export function applyTripFilters(trips: TripCardData[], f: BoardFilters, now: Date): TripCardData[] {
   return trips
     .filter((t) => {
       const at = new Date(t.departsAt);
       return (
-        at > now && at >= from && (!to || at < to) &&
-        t.seatsLeft >= Math.max(1, f.minSeats) &&
+        at > now &&
+        t.seatsLeft >= 1 &&
         (f.chip === "All" || t.chip === f.chip) &&
-        (f.campus === "all" || t.driver.campusId === f.campus) &&
         matchesText(f.q, t.destinationName, t.meetupPointName, t.driver.firstName)
       );
     })
     .sort((a, b) => a.departsAt.localeCompare(b.departsAt));
 }
 
-export function applyRequestFilters(reqs: RequestCardData[], f: BoardFilters, now: Date, tz = CAMPUS_TZ): RequestCardData[] {
-  const { from, to } = dateRange(f.date, now, tz);
+export function applyRequestFilters(reqs: RequestCardData[], f: BoardFilters, now: Date): RequestCardData[] {
   return reqs
     .filter((r) => {
-      const start = new Date(r.windowStart);
       const end = new Date(r.windowEnd);
       return (
-        end > now && end >= from && (!to || start < to) &&
+        end > now &&
         (f.chip === "All" || r.chip === f.chip) &&
-        (f.campus === "all" || r.rider.campusId === f.campus) &&
         matchesText(f.q, r.destinationName, r.meetupPointName, r.rider.firstName)
       );
     })

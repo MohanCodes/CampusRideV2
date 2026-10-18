@@ -49,37 +49,52 @@ test.describe("board", () => {
     await expect(cards(page)).toHaveCount(7);
   });
 
-  test("the filter form narrows by date, college, seats and search", async ({ page }) => {
-    await page.goto("/?date=tomorrow");
-    await expect(cards(page)).toHaveCount(1);
-    await expect(cards(page).first()).toContainText("Target (Montclair)");
-
-    await page.goto("/?college=hmc");
-    await expect(cards(page)).toHaveCount(2); // Maya's trip and the demo viewer's own
-
-    await page.goto("/?seats=3");
-    for (const c of await cards(page).all()) await expect(c).toContainText(/[3-9] seats left/);
-
+  test("search narrows by place, meetup point or name, and the address bar keeps it", async ({ page }) => {
     await page.goto("/?q=airport");
     await expect(cards(page)).toHaveCount(2);
+    await page.goto("/?q=platt");
+    expect(await cards(page).count()).toBeGreaterThan(0);
+    await page.goto("/?q=maya");
+    expect(await cards(page).count()).toBeGreaterThan(0);
   });
 
-  test("filters work by using the form", async ({ page, isMobile }) => {
+  test("the search box finds a trip, and Clear search brings everything back", async ({ page }) => {
     await page.goto("/");
-    if (isMobile) await page.getByText("Filters", { exact: true }).click();
-    const form = page.getByRole("search", { name: "Filter the board" }).and(page.locator(":visible"));
+    const form = page.getByRole("search", { name: "Search the board" });
     await form.getByLabel("Search").fill("market");
-    await form.getByRole("button", { name: "Apply filters" }).click();
+    await form.getByRole("button", { name: "Search" }).click();
     await expect(page).toHaveURL(/q=market/);
     await expect(cards(page)).toHaveCount(1);
     await expect(cards(page).first()).toContainText("Farmers Market");
+    await form.getByRole("link", { name: "Clear search" }).click();
+    await expect(cards(page)).toHaveCount(7);
   });
 
-  test("an empty result says so plainly and offers to clear the filters", async ({ page }) => {
-    await page.goto("/?chip=LA%20%2F%20LAX&college=hmc");
+  test("search keeps the chosen destination chip and the tab", async ({ page }) => {
+    await page.goto("/?chip=Target");
+    const form = page.getByRole("search", { name: "Search the board" });
+    await form.getByLabel("Search").fill("montclair");
+    await form.getByRole("button", { name: "Search" }).click();
+    await expect(page).toHaveURL(/chip=Target/);
+    await expect(page).toHaveURL(/q=montclair/);
+  });
+
+  test("the old date, college and seats filters are gone", async ({ page }) => {
+    await page.goto("/");
+    for (const label of ["Date", "College", "Seats", "Apply filters"]) {
+      await expect(page.getByLabel(label, { exact: true })).toHaveCount(0);
+    }
+    await expect(page.getByRole("button", { name: "Apply filters" })).toHaveCount(0);
+    // Old links still open the board, without a filter taking effect.
+    await page.goto("/?date=tomorrow&college=hmc&seats=3");
+    await expect(cards(page)).toHaveCount(7);
+  });
+
+  test("an empty result says so plainly and offers to clear the search", async ({ page }) => {
+    await page.goto("/?chip=LA%20%2F%20LAX&q=zzz-nothing");
     const empty = page.getByTestId("empty-state");
     await expect(empty).toContainText("No rides to LA / LAX yet");
-    await empty.getByRole("link", { name: "Clear filters" }).click();
+    await empty.getByRole("link", { name: "Clear search" }).click();
     await expect(cards(page)).toHaveCount(7);
   });
 

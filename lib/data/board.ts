@@ -3,7 +3,7 @@ import { getUser } from "@/lib/auth/dal";
 import { getNow, isDemo } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/server";
 import { applyRequestFilters, applyTripFilters } from "./apply";
-import { dateRange, type BoardFilters } from "./filters";
+import type { BoardFilters } from "./filters";
 import { avatarUrls } from "./avatars";
 import { loadIncoming } from "./incoming";
 import { rowToCard } from "./map";
@@ -39,12 +39,8 @@ export async function listTrips(f: BoardFilters): Promise<Result<TripCardData[]>
     const user = await getUser();
     if (!supabase) return { ok: false };
 
-    const { from, to } = dateRange(f.date, now);
-    let query = supabase.from("board_trips").select("*").gte("departs_at", from.toISOString()).order("departs_at");
-    if (to) query = query.lt("departs_at", to.toISOString());
+    let query = supabase.from("board_trips").select("*").gte("departs_at", now.toISOString()).order("departs_at");
     if (f.chip !== "All") query = query.eq("chip", f.chip);
-    if (f.campus !== "all") query = query.eq("driver_campus_id", f.campus);
-    if (f.minSeats > 1) query = query.gte("seats_left", f.minSeats);
     const text = safeSearch(f.q);
     if (text) {
       query = query.or(
@@ -80,11 +76,8 @@ export async function listRequests(f: BoardFilters): Promise<Result<RequestCardD
     const user = await getUser();
     if (!supabase) return { ok: false };
 
-    const { from, to } = dateRange(f.date, now);
-    let query = supabase.from("board_requests").select("*").gte("window_end", from.toISOString()).order("window_start");
-    if (to) query = query.lt("window_start", to.toISOString());
+    let query = supabase.from("board_requests").select("*").gte("window_end", now.toISOString()).order("window_start");
     if (f.chip !== "All") query = query.eq("chip", f.chip);
-    if (f.campus !== "all") query = query.eq("rider_campus_id", f.campus);
     const text = safeSearch(f.q);
     if (text) {
       query = query.or(

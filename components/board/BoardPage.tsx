@@ -3,8 +3,8 @@ import { Suspense, type ReactNode } from "react";
 import { AppShell } from "@/components/AppShell";
 import { BoardTabs } from "@/components/board/BoardTabs";
 import { DestinationChips } from "@/components/board/DestinationChips";
-import { FilterForm } from "@/components/board/FilterForm";
 import { RequestCard } from "@/components/board/RequestCard";
+import { SearchBar } from "@/components/board/SearchBar";
 import { TripCard } from "@/components/board/TripCard";
 import { EmptyState, ErrorState, SkeletonGrid } from "@/components/states";
 import { listRequests, listTrips } from "@/lib/data/board";
@@ -27,28 +27,15 @@ export function BoardPage({ filters, signedIn, forceError = false }: { filters: 
         <DestinationChips filters={filters} />
       </div>
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-[260px_1fr]">
-        <aside aria-label="Filters">
-          <details className="card p-4 lg:hidden">
-            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between font-bold">
-              Filters
-              {hasActiveFilters(filters) && <span className="text-sm font-normal text-green">On</span>}
-            </summary>
-            <div className="mt-4">
-              <FilterForm filters={filters} idPrefix="top" />
-            </div>
-          </details>
-          <div className="sticky top-4 hidden lg:block">
-            <FilterForm filters={filters} idPrefix="side" />
-          </div>
-        </aside>
-
-        <section aria-label={filters.tab === "rides" ? "Rides" : "In search of"}>
-          <Suspense key={addressKey} fallback={<SkeletonGrid />}>
-            <BoardResults filters={filters} now={now} href={`/${addressKey}`} forceError={forceError} />
-          </Suspense>
-        </section>
+      <div className="mt-6">
+        <SearchBar filters={filters} />
       </div>
+
+      <section aria-label={filters.tab === "rides" ? "Rides" : "In search of"} className="mt-8">
+        <Suspense key={addressKey} fallback={<SkeletonGrid />}>
+          <BoardResults filters={filters} now={now} href={`/${addressKey}`} forceError={forceError} />
+        </Suspense>
+      </section>
     </AppShell>
   );
 }
@@ -68,10 +55,10 @@ async function BoardResults({ filters, now, href, forceError }: { filters: Board
     const place = filters.chip === "All" ? "" : ` to ${filters.chip}`;
     const clear = hasActiveFilters(filters) && (
       <Link
-        href={`/${filtersToQuery({ ...filters, chip: "All", date: { kind: "any" }, campus: "all", minSeats: 1, q: "" })}`}
+        href={`/${filtersToQuery(filters, { chip: "All", q: "" })}`}
         className="btn-secondary"
       >
-        Clear filters
+        Clear search
       </Link>
     );
     return rides ? (

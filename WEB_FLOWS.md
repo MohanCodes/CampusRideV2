@@ -86,10 +86,10 @@ Every list screen also has loading (skeleton rows) and error (message plus **Try
 1. Header: community name, search box.
 2. Tabs: **Rides** and **In search of**.
 3. Destination chips: All, Trader Joe's, Target, The Village, Airport (ONT), LA / LAX, Other.
-4. Filters: date (Today, Tomorrow, Pick a date), college, and "Seats: 1+".
-5. Trip cards sorted by departure time, grouped under date headers. On desktop, cards form a two- or three-column grid with a filter sidebar.
+4. One search box (place, meetup point, or first name). Date, college, and seats filters were removed while the board is small; bring them back when it fills up.
+5. Trip cards sorted by departure time, grouped under date headers. On desktop, cards form a two- or three-column grid.
 
-**States.** Empty Rides: illustration, "No rides to Trader Joe's yet," with **Post a trip**, **Ask for a ride**, and **Clear filters**. Full trips are hidden.
+**States.** Empty Rides: illustration, "No rides to Trader Joe's yet," with **Post a trip**, **Ask for a ride**, and **Clear search**. Full trips are hidden.
 
 ### 4.3 Trip detail
 

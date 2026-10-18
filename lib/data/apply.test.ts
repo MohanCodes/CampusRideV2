@@ -29,20 +29,8 @@ describe("applyTripFilters", () => {
     const out = applyTripFilters(trips, parseFilters({ chip: "Other" }), NOW);
     expect(out.map((t) => t.destinationName)).toContain("Ontario Mills");
   });
-  it("filters by college of the driver", () => {
-    const out = applyTripFilters(trips, parseFilters({ college: "hmc" }), NOW);
-    expect(out.every((t) => t.driver.campusId === "hmc")).toBe(true);
-    expect(out.length).toBeGreaterThan(0);
-  });
-  it("filters by the date, in campus time", () => {
-    const out = applyTripFilters(trips, parseFilters({ date: "today" }), NOW);
-    expect(out.every((t) => dayKey(t.departsAt) === "2026-10-17")).toBe(true);
-    const tomorrow = applyTripFilters(trips, parseFilters({ date: "tomorrow" }), NOW);
-    expect(tomorrow.every((t) => dayKey(t.departsAt) === "2026-10-18")).toBe(true);
-  });
-  it("filters by seats needed", () => {
-    const out = applyTripFilters(trips, parseFilters({ seats: "3" }), NOW);
-    expect(out.every((t) => t.seatsLeft >= 3)).toBe(true);
+  it("never lists a full trip", () => {
+    expect(applyTripFilters(trips, DEFAULT_FILTERS, NOW).every((t) => t.seatsLeft >= 1)).toBe(true);
   });
   it("searches destination, meetup point, and driver", () => {
     expect(applyTripFilters(trips, parseFilters({ q: "airport" }), NOW).length).toBeGreaterThan(0);
@@ -55,7 +43,7 @@ describe("applyTripFilters", () => {
     expect(applyTripFilters(trips, DEFAULT_FILTERS, later).find((t) => t.id === "t1")).toBeUndefined();
   });
   it("combines filters", () => {
-    expect(applyTripFilters(trips, parseFilters({ chip: "Target", college: "scripps" }), NOW)).toEqual([]);
+    expect(applyTripFilters(trips, parseFilters({ chip: "Target", q: "zzz-nothing" }), NOW)).toEqual([]);
   });
 });
 
