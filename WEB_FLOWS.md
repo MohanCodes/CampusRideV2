@@ -283,7 +283,7 @@ The landing page has no danger color, highlight color, or dark mode, so those ro
 
 | Style | Size / weight | Letter spacing | Use |
 | --- | --- | --- | --- |
-| Display | clamp(3.6rem, 6.4vw, 5.5rem) / 500 | -0.045em | Landing page headline only |
+| Display | clamp(3.6rem, 5.4vw, 5rem) / 500 | -0.045em | Landing page headline only |
 | Heading 1 | 3rem / 500, line height 1.08 | -0.03em | Section headings, page titles on desktop |
 | Heading 2 | 1.44rem / 500 | -0.02em | Card titles, step titles, screen headings in the app |
 | Body | 1rem / 400, line height 1.65 | normal | Messages, notes, descriptions |

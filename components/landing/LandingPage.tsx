@@ -89,14 +89,14 @@ export function LandingPage() {
         {/* Hero */}
         <section className="mx-4 max-w-[1320px] overflow-hidden rounded-[28px] bg-mint px-6 pt-12 sm:mx-6 md:px-16 md:pt-[72px] min-[1368px]:mx-auto">
           <div className="grid items-center gap-10 md:grid-cols-[1.1fr_1fr]">
-            <div>
-              <Eyebrow>For students at the 5Cs</Eyebrow>
+            <div className="text-center">
+              <Eyebrow center>For students at the 5Cs</Eyebrow>
               <h1 className="t-display mb-[25px] mt-[29px]">
                 Same direction.
                 <br />
                 <em className="font-serif font-normal">Better together.</em>
               </h1>
-              <p className="max-w-[435px] text-lg text-muted">
+              <p className="mx-auto max-w-[435px] text-lg text-muted">
                 Rides with students you can trust. Find someone already heading your way, then
                 choose an approved public place to meet.
               </p>
