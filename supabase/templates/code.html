@@ -1,2 +1,20 @@
-<p>Your CampusRide code is <strong>{{ .Token }}</strong>.</p>
-<p>It works for 10 minutes. If you didn't ask for it, you can ignore this email.</p>
+<!doctype html>
+<html lang="en">
+<body style="margin:0;background:#fcfdf9;font-family:Arial,Helvetica,sans-serif;color:#17392e;">
+  <div style="max-width:520px;margin:0 auto;padding:32px 20px;">
+    <p style="font-size:20px;font-weight:700;letter-spacing:-0.04em;margin:0 0 24px;">CampusRide</p>
+
+    <p style="font-size:16px;line-height:1.65;margin:0 0 16px;">Hi, here is your sign-in code.</p>
+
+    <div style="background:#ddf9ea;border-radius:12px;padding:24px 16px;text-align:center;margin:0 0 16px;">
+      <p style="font-size:36px;font-weight:700;letter-spacing:0.3em;margin:0;padding-left:0.3em;font-family:'Courier New',Courier,monospace;color:#17392e;">{{ .Token }}</p>
+    </div>
+
+    <p style="font-size:16px;line-height:1.65;margin:0 0 12px;">Enter it on the sign-in screen. It works for 10 minutes.</p>
+    <p style="font-size:14px;line-height:1.65;margin:0;color:#5d7168;">If you didn't ask for this, you can ignore this email. No one can sign in without the code.</p>
+
+    <hr style="border:0;border-top:1px solid #cedcd3;margin:32px 0 16px;">
+    <p style="font-size:12px;line-height:1.6;color:#5d7168;margin:0;">Campus Ride connects students. It doesn't supervise rides or run background checks. Use your judgment, and call 911 in an emergency.</p>
+  </div>
+</body>
+</html>
