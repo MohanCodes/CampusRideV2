@@ -1,10 +1,9 @@
 "use client";
 
-import { MeetupMap } from "@/components/map/MeetupMap";
 import { campusShortName } from "@/lib/campuses";
 import type { MeetupOption } from "@/lib/data/post";
 
-// Approved points only, from a map or a list. There is no way to type an address.
+// Approved points only, from a list. There is no way to type an address.
 export function MeetupPointPicker({
   points, campusId, value, onChange, error,
 }: {
@@ -31,8 +30,7 @@ export function MeetupPointPicker({
   return (
     <fieldset aria-describedby={error ? "meetup-error" : "meetup-help"}>
       <legend className="mb-2 text-sm font-bold">Meetup point</legend>
-      <MeetupMap points={points} selectedId={value || null} onSelect={onChange} fallbackName="your campus" />
-      <p id="meetup-help" className="mt-2 text-sm text-muted">
+      <p id="meetup-help" className="text-sm text-muted">
         Meet at an approved public spot. The exact place to stand is shared with riders after you accept them.
       </p>
       {error && <p id="meetup-error" role="alert" className="field-error">{error}</p>}

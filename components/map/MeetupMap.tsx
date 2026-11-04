@@ -28,6 +28,7 @@ export function MeetupMap({
   const markers = useRef(new Map<string, HTMLButtonElement>());
   const selected = useRef(selectedId);
   const onSelectRef = useRef(onSelect);
+  const mapRef = useRef<import("mapbox-gl").Map | null>(null);
   const [failed, setFailed] = useState(false);
 
   const usable = points.filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng));
@@ -40,6 +41,13 @@ export function MeetupMap({
   useEffect(() => {
     selected.current = selectedId;
     markers.current.forEach((el, id) => stylePin(el, id === selectedId));
+    // Picking a point from the list brings it to the middle of the map.
+    const p = selectedId ? points.find((q) => q.id === selectedId) : undefined;
+    if (p && Number.isFinite(p.lat) && Number.isFinite(p.lng)) {
+      mapRef.current?.easeTo({ center: [p.lng, p.lat], zoom: 16, duration: reducedMotion() ? 0 : 600 });
+    }
+    // points only matters through selectedId here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
 
   useEffect(() => {
@@ -61,6 +69,7 @@ export function MeetupMap({
           zoom: 15,
           cooperativeGestures: true,
         });
+        mapRef.current = map;
         map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
         map.on("error", (e) => {
           const status = (e as unknown as { error?: { status?: number } }).error?.status;
@@ -89,29 +98,46 @@ export function MeetupMap({
     return () => {
       cancelled = true;
       map?.remove();
+      mapRef.current = null;
       pins.clear();
     };
     // usable is derived from points; pointsKey changes exactly when it does.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, pointsKey]);
 
+  const chosen = selectedId ? points.find((p) => p.id === selectedId) : undefined;
+  // Only the picker (which can choose) names the chosen point; the trip page already says it beside the map.
+  const caption = !onSelect ? null : (
+    <p
+      data-testid="meetup-map-selected"
+      aria-live="polite"
+      className="pointer-events-none absolute bottom-2 left-2 max-w-[calc(100%-1rem)] truncate rounded-md bg-surface px-3 py-1.5 text-sm font-bold shadow"
+    >
+      {chosen ? chosen.name : "Pick a meetup point"}
+    </p>
+  );
+
   if (!token || usable.length === 0 || failed) {
     return (
-      <div data-testid="meetup-map" data-kind="illustration">
-        <MeetupPointMap name={fallbackName} />
+      <div data-testid="meetup-map" data-kind="illustration" className="relative">
+        <MeetupPointMap name={chosen?.name ?? fallbackName} />
+        {caption}
       </div>
     );
   }
   return (
-    <div
-      ref={container}
-      data-testid="meetup-map"
-      data-kind="mapbox"
-      role="region"
-      aria-label="Map of approved meetup points"
-      style={{ height }}
-      className="overflow-hidden rounded-xl border border-line"
-    />
+    <div className="relative">
+      <div
+        ref={container}
+        data-testid="meetup-map"
+        data-kind="mapbox"
+        role="region"
+        aria-label="Map of approved meetup points"
+        style={{ height }}
+        className="overflow-hidden rounded-xl border border-line"
+      />
+      {caption}
+    </div>
   );
 }
 
@@ -126,3 +152,5 @@ function stylePin(el: HTMLButtonElement, selected: boolean) {
   ].join(";");
   el.setAttribute("aria-pressed", String(selected));
 }
+
+const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
