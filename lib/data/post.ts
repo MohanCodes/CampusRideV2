@@ -8,7 +8,24 @@ import type { Result } from "./types";
 
 export type PlaceOption = { id: string; name: string; chip: string; category: string };
 export type MeetupOption = { id: string; name: string; campusId: string; shared: boolean; type: string; lat: number; lng: number };
-export type PostFormData = { places: PlaceOption[]; points: MeetupOption[]; campusId: string; lastMeetupPointId: string | null };
+// A car the driver has posted with before. The plate is theirs to see; it is hidden from everyone else until a seat is accepted.
+export type SavedCar = { make: string; color: string; plate: string };
+export type PostFormData = { places: PlaceOption[]; points: MeetupOption[]; campusId: string; lastMeetupPointId: string | null; cars: SavedCar[] };
+
+/** Distinct cars from past trips, newest first, at most `max`. */
+export function distinctCars(rows: { make: string; color: string; plate: string }[], max = 4): SavedCar[] {
+  const seen = new Set<string>();
+  const out: SavedCar[] = [];
+  for (const r of rows) {
+    const car = { make: r.make.trim(), color: r.color.trim(), plate: r.plate.trim().toUpperCase() };
+    const key = `${car.make}|${car.color}|${car.plate}`.toLowerCase();
+    if (!car.make || !car.color || !car.plate || seen.has(key)) continue;
+    seen.add(key);
+    out.push(car);
+    if (out.length === max) break;
+  }
+  return out;
+}
 
 const chipRank = (chip: string) => {
   const i = (CHIPS as readonly string[]).indexOf(chip);
@@ -46,7 +63,7 @@ const DEMO_POINTS: MeetupOption[] = [
 
 export async function getPostFormData(): Promise<Result<PostFormData>> {
   if (isDemo()) {
-    return { ok: true, data: { places: sortPlaces(DEMO_PLACES), points: sortPoints(DEMO_POINTS, "hmc"), campusId: "hmc", lastMeetupPointId: DEMO_POINTS[0].id } };
+    return { ok: true, data: { places: sortPlaces(DEMO_PLACES), points: sortPoints(DEMO_POINTS, "hmc"), campusId: "hmc", lastMeetupPointId: DEMO_POINTS[0].id, cars: [] } };
   }
   try {
     const supabase = await createClient();
@@ -56,11 +73,13 @@ export async function getPostFormData(): Promise<Result<PostFormData>> {
     const { data: me } = await supabase.from("profiles").select("campus_id").eq("id", user.id).maybeSingle();
     const campusId = (me?.campus_id as CampusId | undefined) ?? CAMPUS_IDS[0];
 
-    const [placesRes, pointsRes, lastRes] = await Promise.all([
+    const [placesRes, pointsRes, lastRes, carsRes] = await Promise.all([
       supabase.from("places").select("id, name, chip, category").eq("active", true),
       supabase.from("meetup_points").select("id, name, campus_id, shared, type, lat, lng")
         .eq("status", "approved").or(`campus_id.eq.${campusId},shared.eq.true`),
       supabase.from("trips").select("meetup_point_id").eq("driver_id", user.id).order("created_at", { ascending: false }).limit(1),
+      supabase.from("trips").select("car_make, car_color, trip_private(car_plate)").eq("driver_id", user.id)
+        .order("created_at", { ascending: false }).limit(20),
     ]);
     if (placesRes.error || pointsRes.error) return { ok: false };
 
@@ -68,6 +87,14 @@ export async function getPostFormData(): Promise<Result<PostFormData>> {
       id: p.id, name: p.name, campusId: p.campus_id, shared: p.shared, type: p.type, lat: p.lat, lng: p.lng,
     }));
     const last = lastRes.data?.[0]?.meetup_point_id ?? null;
+    // Saved cars are a convenience: if this lookup fails, the form simply starts blank.
+    const cars = distinctCars(
+      (carsRes.data ?? []).map((t) => {
+        const priv = t.trip_private as { car_plate: string } | { car_plate: string }[] | null;
+        const plate = Array.isArray(priv) ? priv[0]?.car_plate : priv?.car_plate;
+        return { make: t.car_make, color: t.car_color, plate: plate ?? "" };
+      }),
+    );
     return {
       ok: true,
       data: {
@@ -75,6 +102,7 @@ export async function getPostFormData(): Promise<Result<PostFormData>> {
         points: sortPoints(points, campusId),
         campusId,
         lastMeetupPointId: points.some((p) => p.id === last) ? last : null,
+        cars,
       },
     };
   } catch {

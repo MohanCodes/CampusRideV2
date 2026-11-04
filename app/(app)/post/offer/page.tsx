@@ -24,6 +24,13 @@ export default async function OfferPage({ searchParams }: PageProps<"/post/offer
     res.data.points = [];
     res.data.lastMeetupPointId = null;
   }
+  // In demo mode, ?cars=saved shows the saved-car chips for review.
+  if (res.ok && isDemo() && sp.cars === "saved") {
+    res.data.cars = [
+      { make: "Honda Civic", color: "Blue", plate: "8ABC123" },
+      { make: "Toyota Corolla", color: "White", plate: "7XYZ456" },
+    ];
+  }
   let start = nextHalfHour(getNow());
 
   // "Post a new trip for this": start from the request's destination and time.
@@ -55,6 +62,7 @@ export default async function OfferPage({ searchParams }: PageProps<"/post/offer
           <OfferForm
             places={res.data.places}
             points={res.data.points}
+            cars={res.data.cars}
             campusId={res.data.campusId}
             nowIso={getNow().toISOString()}
             forRequest={preset}

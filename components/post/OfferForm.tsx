@@ -7,11 +7,11 @@ import { postTrip, type PostTripState } from "@/app/(app)/post/actions";
 import { DestinationPicker, type Destination } from "@/components/post/DestinationPicker";
 import { MeetupPointPicker } from "@/components/post/MeetupPointPicker";
 import { CONTACT_INFO_MESSAGE, containsContactInfo } from "@/lib/contact";
-import type { MeetupOption, PlaceOption } from "@/lib/data/post";
+import type { MeetupOption, PlaceOption, SavedCar } from "@/lib/data/post";
 import { localToUtc } from "@/lib/format/tz";
 
 type Props = {
-  places: PlaceOption[]; points: MeetupOption[]; campusId: string;
+  places: PlaceOption[]; points: MeetupOption[]; campusId: string; cars: SavedCar[];
   defaults: { date: string; time: string; meetupPointId: string };
   // When the trip answers a request, its destination is already chosen and the offer goes out with it.
   forRequest?: { id: string; destination: Destination | null };
@@ -19,8 +19,18 @@ type Props = {
   nowIso: string;
 };
 
-// "Offer a ride": one scrolling form with smart defaults (next half hour, 3 seats, last used meetup point).
-export function OfferForm({ places, points, campusId, defaults, nowIso, forRequest }: Props) {
+const STEP_TITLES = ["Where to", "When", "Seats and car", "Details"];
+const LAST_STEP = STEP_TITLES.length - 1;
+// Which server field names belong to which pane, so a refusal can send the person to the right one.
+const STEP_FIELDS = [
+  ["destination", "meetupPointId"],
+  ["time", "date", "backByTime"],
+  ["seats", "carMake", "carColor", "carPlate"],
+  ["costNote", "notes"],
+];
+
+// "Offer a ride": one scrolling form on desktop, and one pane at a time on phones with smart defaults (next half hour, 3 seats, last used meetup point).
+export function OfferForm({ places, points, campusId, cars, defaults, nowIso, forRequest }: Props) {
   const router = useRouter();
   const [state, action, pending] = useActionState<PostTripState, FormData>(postTrip, { status: "idle" });
   const form = useRef<HTMLFormElement>(null);
@@ -35,17 +45,41 @@ export function OfferForm({ places, points, campusId, defaults, nowIso, forReque
   // A remembered meetup point only counts while it is still in the list of approved points.
   const initialPoint = points.some((p) => p.id === defaults.meetupPointId) ? defaults.meetupPointId : "";
   const [pointId, setPointId] = useState(initialPoint);
-  const [make, setMake] = useState("");
-  const [color, setColor] = useState("");
-  const [plate, setPlate] = useState("");
+  // Start from the car used on the last trip, if there is one.
+  const firstCar = cars[0];
+  const [make, setMake] = useState(firstCar?.make ?? "");
+  const [color, setColor] = useState(firstCar?.color ?? "");
+  const [plate, setPlate] = useState(firstCar?.plate ?? "");
   const [cost, setCost] = useState("");
   const [notes, setNotes] = useState("");
   const [confirmOverlap, setConfirmOverlap] = useState(false);
 
   const fieldErrors = state.status === "error" ? (state.fields ?? {}) : {};
 
+  // On phones the form shows one pane at a time. From the lg breakpoint up, every pane shows at once.
+  const [step, setStep] = useState(0);
+  const stepHeading = useRef<HTMLHeadingElement>(null);
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (firstRender.current) { firstRender.current = false; return; }
+    stepHeading.current?.focus();
+  }, [step]);
+
+  // After a refused post, go to the first pane that has a problem (adjusted while rendering, not in an effect).
+  const [seenState, setSeenState] = useState(state);
+  if (seenState !== state) {
+    setSeenState(state);
+    if (state.status === "overlap") setStep(LAST_STEP);
+    else if (state.status === "error" && state.fields) {
+      const keys = Object.keys(state.fields);
+      const found = STEP_FIELDS.findIndex((names) => names.some((n) => keys.includes(n)));
+      if (found >= 0) setStep(found);
+    }
+  }
+  const pane = (i: number) => (step === i ? "" : "max-lg:hidden");
+
   // Warn before the browser tab closes with a half-filled trip.
-  const dirty = Boolean(destination !== initialDestination || backBy || make || color || plate || cost || notes || seats !== 3 || date !== defaults.date || time !== defaults.time || pointId !== initialPoint);
+  const dirty = Boolean(destination !== initialDestination || backBy || make !== (firstCar?.make ?? "") || color !== (firstCar?.color ?? "") || plate !== (firstCar?.plate ?? "") || cost || notes || seats !== 3 || date !== defaults.date || time !== defaults.time || pointId !== initialPoint);
   useEffect(() => {
     if (!dirty) return;
     const warn = (e: BeforeUnloadEvent) => e.preventDefault();
@@ -62,6 +96,12 @@ export function OfferForm({ places, points, campusId, defaults, nowIso, forReque
   const costWarning = containsContactInfo(cost) ? CONTACT_INFO_MESSAGE : undefined;
   const notesWarning = containsContactInfo(notes) || containsContactInfo(`${cost} ${notes}`) ? CONTACT_INFO_MESSAGE : undefined;
 
+  const stepReady = [
+    Boolean(destination && pointId),
+    Boolean(date && time && !clientTimeError),
+    Boolean(make.trim() && color.trim() && plate.trim()),
+    true,
+  ];
   const ready = Boolean(destination && date && time && pointId && !clientTimeError);
   const disabledReason = !destination ? "Pick where you're going." : !pointId ? "Pick a meetup point." : clientTimeError ? clientTimeError : !date || !time ? "Pick a date and time." : null;
 
@@ -89,7 +129,17 @@ export function OfferForm({ places, points, campusId, defaults, nowIso, forReque
         <input type="hidden" name="seats" value={seats} />
         {forRequest && <input type="hidden" name="forRequest" value={forRequest.id} />}
 
-<div className="space-y-8">
+<div className="lg:hidden lg:col-span-2" data-testid="stepper">
+          <p className="t-label text-muted" aria-live="polite">Step {step + 1} of {STEP_TITLES.length}</p>
+          <div className="mt-2 flex gap-1" aria-hidden="true">
+            {STEP_TITLES.map((t, i) => (
+              <span key={t} className={`h-1 flex-1 rounded-full ${i <= step ? "bg-ink" : "bg-pale"}`} />
+            ))}
+          </div>
+          <h2 ref={stepHeading} tabIndex={-1} className="t-h2 mt-4 outline-none">{STEP_TITLES[step]}</h2>
+        </div>
+
+<div className={`space-y-8 ${pane(0)}`}>
         <DestinationPicker places={places} value={destination} onChange={setDestination} error={fieldErrors.destination} />
 
         <MeetupPointPicker points={points} campusId={campusId} value={pointId} onChange={setPointId} error={fieldErrors.meetupPointId} />
@@ -97,6 +147,7 @@ export function OfferForm({ places, points, campusId, defaults, nowIso, forReque
 
 <div className="space-y-8">
 
+        <div className={`space-y-8 ${pane(1)}`}>
         <fieldset>
           <legend className="mb-2 text-sm font-bold">When</legend>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -117,6 +168,9 @@ export function OfferForm({ places, points, campusId, defaults, nowIso, forReque
           </div>
         </fieldset>
 
+        </div>
+
+        <div className={`space-y-8 ${pane(2)}`}>
         <div>
           <p id="seats-label" className="mb-2 text-sm font-bold">Seats open</p>
           <div role="group" aria-labelledby="seats-label" className="inline-flex items-center gap-2">
@@ -130,6 +184,38 @@ export function OfferForm({ places, points, campusId, defaults, nowIso, forReque
 
         <fieldset>
           <legend className="mb-2 text-sm font-bold">Car</legend>
+          {cars.length > 0 && (
+            <div className="mb-4" data-testid="saved-cars">
+              <p className="mb-2 text-sm text-muted">Pick a car you&apos;ve used before, or add a new one.</p>
+              <ul className="flex flex-wrap gap-2">
+                {cars.map((c) => {
+                  const on = c.make === make && c.color === color && c.plate === plate.trim().toUpperCase();
+                  return (
+                    <li key={`${c.make}|${c.color}|${c.plate}`}>
+                      <button
+                        type="button"
+                        aria-pressed={on}
+                        className={`card min-h-[44px] px-4 py-2 text-left text-sm ${on ? "!border-green !bg-mint" : ""}`}
+                        onClick={() => { setMake(c.make); setColor(c.color); setPlate(c.plate); }}
+                      >
+                        <span className="font-bold">{c.color} {c.make}</span>
+                        <span className="block text-muted">{c.plate}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+                <li>
+                  <button
+                    type="button"
+                    className="card min-h-[44px] px-4 py-2 text-sm font-bold"
+                    onClick={() => { setMake(""); setColor(""); setPlate(""); document.getElementById("carMake")?.focus(); }}
+                  >
+                    New car
+                  </button>
+                </li>
+              </ul>
+            </div>
+          )}
           <div className="grid gap-4 sm:grid-cols-3">
             <Field id="carMake" label="Make" value={make} onChange={setMake} error={fieldErrors.carMake} autoComplete="off" />
             <Field id="carColor" label="Color" value={color} onChange={setColor} error={fieldErrors.carColor} autoComplete="off" />
@@ -138,6 +224,9 @@ export function OfferForm({ places, points, campusId, defaults, nowIso, forReque
           <p className="mt-2 text-sm text-muted">The plate is only shown to riders you accept.</p>
         </fieldset>
 
+        </div>
+
+        <div className={`space-y-8 ${pane(3)}`}>
         <div>
           <label htmlFor="costNote" className="mb-1 block text-sm font-bold">Cost note <span className="font-normal text-muted">(optional)</span></label>
           <input id="costNote" name="costNote" value={cost} onChange={(e) => setCost(e.target.value)} maxLength={200} className="field" placeholder="Suggested: split gas and parking, no profit" aria-invalid={costWarning || fieldErrors.costNote ? true : undefined} aria-describedby="cost-note" />
@@ -155,6 +244,7 @@ export function OfferForm({ places, points, campusId, defaults, nowIso, forReque
         </div>
 
         </div>
+        </div>
 
 <div className="space-y-8 lg:col-span-2">
 {state.status === "overlap" && (
@@ -171,9 +261,17 @@ export function OfferForm({ places, points, campusId, defaults, nowIso, forReque
 
         <div>
           <div className="flex flex-wrap items-center gap-3">
-            <button type="submit" className="btn-primary" disabled={!ready || pending}>
+            {step < LAST_STEP && (
+              <button type="button" className="btn-primary lg:hidden" disabled={!stepReady[step]} onClick={() => setStep(step + 1)}>
+                Next <span aria-hidden="true">→</span>
+              </button>
+            )}
+            <button type="submit" className={`btn-primary ${step < LAST_STEP ? "max-lg:hidden" : ""}`} disabled={!ready || pending}>
               {pending ? "Posting…" : "Post trip"} <span aria-hidden="true">↗</span>
             </button>
+            {step > 0 && (
+              <button type="button" className="btn-secondary lg:hidden" onClick={() => setStep(step - 1)}>Back</button>
+            )}
             <button type="button" className="btn-secondary" onClick={leave}>Cancel</button>
           </div>
           {!ready && disabledReason && <p className="mt-2 text-sm text-muted" data-testid="disabled-reason">{disabledReason}</p>}
