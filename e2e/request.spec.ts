@@ -12,22 +12,41 @@ const pickPlace = async (page: Page, name: string) => {
   await page.getByRole("button", { name }).click();
 };
 
+// On phones the ask form shows one pane at a time (Where to, When, Details); on desktop it is all visible.
+const isPhone = () => test.info().project.name.includes("phone");
+// The button that moves the form forward: Next on a phone pane, Post request on desktop.
+const gate = (page: Page) => (isPhone() ? page.getByRole("button", { name: /^Next/ }) : post(page));
+// Phone only: goes forward to pane `n` (0 to 2), picking a place on the first pane. No-op on desktop.
+const toStep = async (page: Page, n: number) => {
+  if (!isPhone()) return;
+  for (;;) {
+    const current = Number(/Step (\d)/.exec((await page.getByTestId("stepper").textContent()) ?? "")?.[1]) - 1;
+    if (current >= n) return;
+    if (current === 0 && !(await page.getByTestId("destination-selected").isVisible())) await pickPlace(page, "Trader Joe's");
+    await page.getByRole("button", { name: /^Next/ }).click();
+    await expect(page.getByTestId("stepper")).toContainText(`Step ${current + 2}`);
+  }
+};
+
 test.describe("asking for a ride", () => {
   test("starts with sensible defaults and says what is still needed", async ({ page }) => {
     await page.goto("/post/ask");
     await expect(page.getByRole("heading", { level: 1, name: "Ask for a ride" })).toBeVisible();
+    await expect(gate(page)).toBeDisabled();
+    await expect(page.getByTestId("disabled-reason")).toHaveText("Pick where you're going.");
+    await expect(page.getByText("You can have up to 2 open requests.")).toBeVisible();
+    await toStep(page, 1);
     await expect(page.getByLabel("Date")).toHaveValue("2026-10-17");
     await expect(page.getByLabel("Around")).toHaveValue("13:30");
     await expect(page.getByLabel("Plus or minus 30 minutes")).toBeChecked();
+    await toStep(page, 2);
     await expect(page.getByTestId("seats-value")).toHaveText("1");
     await expect(page.getByLabel(/I'll chip in/)).toBeChecked();
-    await expect(post(page)).toBeDisabled();
-    await expect(page.getByTestId("disabled-reason")).toHaveText("Pick where you're going.");
-    await expect(page.getByText("You can have up to 2 open requests.")).toBeVisible();
   });
 
   test("offers the four flexibilities", async ({ page }) => {
     await page.goto("/post/ask");
+    await toStep(page, 1);
     for (const label of ["Exactly then", "Plus or minus 30 minutes", "Plus or minus 1 hour", "Any time that day"]) {
       await expect(page.getByLabel(label)).toBeVisible();
     }
@@ -37,6 +56,7 @@ test.describe("asking for a ride", () => {
 
   test("seats go from 1 to 3 only", async ({ page }) => {
     await page.goto("/post/ask");
+    await toStep(page, 2);
     const more = page.getByRole("button", { name: "More seats" });
     await more.click();
     await more.click();
@@ -47,6 +67,7 @@ test.describe("asking for a ride", () => {
 
   test("there is no price field, only whether you will chip in", async ({ page }) => {
     await page.goto("/post/ask");
+    await toStep(page, 2);
     await expect(page.getByRole("textbox", { name: /price|cost|pay|\$/i })).toHaveCount(0);
     await expect(page.locator('input[name="price"], input[name="amount"]')).toHaveCount(0);
     await page.getByLabel(/I'll chip in/).uncheck();
@@ -56,18 +77,20 @@ test.describe("asking for a ride", () => {
   test("a time more than 7 days out, or in the past, is refused inline", async ({ page }) => {
     await page.goto("/post/ask");
     await pickPlace(page, "Trader Joe's");
+    await toStep(page, 1);
     await page.getByLabel("Date").fill("2026-10-30");
     await expect(page.locator("#time-error")).toHaveText("Pick a time within the next 7 days.");
-    await expect(post(page)).toBeDisabled();
+    await expect(gate(page)).toBeDisabled();
     await page.getByLabel("Date").fill("2020-01-01");
     await expect(page.locator("#time-error")).toHaveText("That time has already passed. Pick a later one.");
     await page.getByLabel("Date").fill("2026-10-20");
     await expect(page.locator("#time-error")).toHaveText("Up to 7 days ahead.");
-    await expect(post(page)).toBeEnabled();
+    await expect(gate(page)).toBeEnabled();
   });
 
   test("the date picker stops at 7 days ahead", async ({ page }) => {
     await page.goto("/post/ask");
+    await toStep(page, 1);
     await expect(page.getByLabel("Date")).toHaveAttribute("max", "2026-10-24");
     await expect(page.getByLabel("Date")).toHaveAttribute("min", "2026-10-17");
   });
@@ -79,12 +102,13 @@ test.describe("asking for a ride", () => {
     await page.goto("/post/ask?points=none");
     await expect(page.getByTestId("no-meetup-points")).toBeVisible();
     await pickPlace(page, "Trader Joe's");
-    await expect(post(page)).toBeDisabled();
+    await expect(gate(page)).toBeDisabled();
     await expect(page.getByTestId("disabled-reason")).toHaveText("Pick a meetup point.");
   });
 
   test("contact details in the note are caught as you type", async ({ page }) => {
     await page.goto("/post/ask");
+    await toStep(page, 2);
     await page.getByLabel(/Note/).fill("text me 909-555-0123");
     await expect(page.locator("#note-help")).toHaveText("Keep contact details in the app chat.");
     await page.getByLabel(/Note/).fill("Two grocery bags");
@@ -94,12 +118,14 @@ test.describe("asking for a ride", () => {
   test("a complete request reaches the server, which says plainly that sample mode can't post", async ({ page }) => {
     await page.goto("/post/ask");
     await pickPlace(page, "Trader Joe's");
+    await toStep(page, 2);
     await post(page).click();
     await expect(page.getByText("Asking for a ride isn't available in sample mode.")).toBeVisible();
   });
 
   test("leaving a half-filled request asks before discarding it", async ({ page }) => {
     await page.goto("/post/ask");
+    await toStep(page, 2);
     await page.getByLabel(/Note/).fill("hello");
     page.once("dialog", (d) => { expect(d.message()).toBe("Discard this request?"); void d.dismiss(); });
     await page.getByRole("button", { name: "Cancel" }).click();
