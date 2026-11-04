@@ -19,7 +19,7 @@ const fillCar = async (page: Page) => {
   await page.getByLabel("Color").fill("Blue");
   await page.getByLabel("Plate").fill("abc 123");
 };
-// Phone only: goes forward to pane `n` (0 to 3), picking a place on the first pane and filling the car on the third. No-op on desktop.
+// Phone only: goes forward to pane `n` (0 to 4, where 4 is the review), picking a place on the first pane and filling the car on the third. No-op on desktop.
 const toStep = async (page: Page, n: number) => {
   if (!isPhone()) return;
   for (;;) {
@@ -169,7 +169,7 @@ test.describe("the offer form", () => {
       await page.getByLabel("Make").fill("Honda");
       await page.getByLabel("Color").fill("Blue");
       await page.getByLabel("Plate").fill("!");
-      await page.getByRole("button", { name: /^Next/ }).click();
+      for (let i = 0; i < 2; i++) await page.getByRole("button", { name: /^Next/ }).click();
       await submit(page).click();
       await expect(page.locator("#carPlate-error")).toContainText("Enter the plate");
       await expect(page.getByLabel("Plate")).toBeVisible();
@@ -185,7 +185,7 @@ test.describe("the offer form", () => {
   test("a complete form reaches the server, which says plainly that sample mode can't post", async ({ page }) => {
     await page.goto("/post/offer");
     await pickPlace(page, "Trader Joe's");
-    if (isPhone()) await toStep(page, 3);
+    if (isPhone()) await toStep(page, 4);
     else await fillCar(page);
     await submit(page).click();
     await expect(page.getByText("Posting isn't available in sample mode.")).toBeVisible();
@@ -226,6 +226,53 @@ test.describe("the offer form", () => {
     await toStep(page, 0);
     await page.getByRole("button", { name: "Cancel" }).click();
     await expect(page).toHaveURL(/\/post$/);
+  });
+
+  test("on a phone the Next button stays pinned above the bottom bar, and a review pane lists everything", async ({ page }) => {
+    test.skip(!isPhone(), "phone layout only");
+    await page.goto("/post/offer");
+    await pickPlace(page, "Trader Joe's");
+    const next = page.getByRole("button", { name: /^Next/ });
+    const box = await next.boundingBox();
+    const nav = await page.getByRole("navigation", { name: "Bottom navigation" }).boundingBox();
+    expect(box && nav && box.y + box.height <= nav.y).toBe(true);
+    await toStep(page, 4);
+    const review = page.getByTestId("review");
+    await expect(review).toContainText("Trader Joe's");
+    await expect(review).toContainText("Platt Campus Center");
+    await expect(review).toContainText("Honda");
+    await expect(submit(page)).toBeVisible();
+    await review.locator("div", { hasText: "Car" }).getByRole("button", { name: "Edit" }).last().click();
+    await expect(page.getByLabel("Make")).toBeVisible();
+  });
+
+  test("a half-filled form is kept as a draft that can be continued or dropped", async ({ page }) => {
+    await page.goto("/post/offer");
+    await pickPlace(page, "Trader Joe's");
+    await toStep(page, 3);
+    await page.getByLabel("Notes").fill("Two bags max");
+    await page.getByLabel("Notes").blur();
+    await page.reload();
+    const banner = page.getByTestId("draft-banner");
+    await expect(banner).toContainText("unfinished trip");
+    await banner.getByRole("button", { name: "Continue" }).click();
+    await expect(banner).toBeHidden();
+    await toStep(page, 3);
+    await expect(page.getByLabel("Notes")).toHaveValue("Two bags max");
+    await page.reload();
+    await page.getByTestId("draft-banner").getByRole("button", { name: "Start over" }).click();
+    await page.reload();
+    await expect(page.getByTestId("draft-banner")).toHaveCount(0);
+  });
+
+  test("the plate is never kept in a draft", async ({ page }) => {
+    await page.goto("/post/offer");
+    await pickPlace(page, "Trader Joe's");
+    await toStep(page, 2);
+    await fillCar(page);
+    const stored = await page.evaluate(() => window.localStorage.getItem("draft:offer"));
+    expect(stored).not.toBeNull();
+    expect(stored).not.toMatch(/ABC 123/i);
   });
 
   test("leaving an untouched form needs no question", async ({ page }) => {

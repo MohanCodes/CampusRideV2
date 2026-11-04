@@ -16,7 +16,7 @@ const pickPlace = async (page: Page, name: string) => {
 const isPhone = () => test.info().project.name.includes("phone");
 // The button that moves the form forward: Next on a phone pane, Post request on desktop.
 const gate = (page: Page) => (isPhone() ? page.getByRole("button", { name: /^Next/ }) : post(page));
-// Phone only: goes forward to pane `n` (0 to 2), picking a place on the first pane. No-op on desktop.
+// Phone only: goes forward to pane `n` (0 to 3, where 3 is the review), picking a place on the first pane. No-op on desktop.
 const toStep = async (page: Page, n: number) => {
   if (!isPhone()) return;
   for (;;) {
@@ -118,7 +118,7 @@ test.describe("asking for a ride", () => {
   test("a complete request reaches the server, which says plainly that sample mode can't post", async ({ page }) => {
     await page.goto("/post/ask");
     await pickPlace(page, "Trader Joe's");
-    await toStep(page, 2);
+    await toStep(page, 3);
     await post(page).click();
     await expect(page.getByText("Asking for a ride isn't available in sample mode.")).toBeVisible();
   });
@@ -133,6 +133,21 @@ test.describe("asking for a ride", () => {
     page.once("dialog", (d) => void d.accept());
     await page.getByRole("button", { name: "Cancel" }).click();
     await expect(page).toHaveURL(/\/post$/);
+  });
+
+  test("on a phone a review pane lists the request, and a draft is kept", async ({ page }) => {
+    test.skip(!isPhone(), "phone layout only");
+    await page.goto("/post/ask");
+    await toStep(page, 2);
+    await page.getByLabel(/Note/).fill("Two grocery bags");
+    await toStep(page, 3);
+    await expect(page.getByTestId("review")).toContainText("Trader Joe's");
+    await expect(page.getByTestId("review")).toContainText("Two grocery bags");
+    await page.reload();
+    await expect(page.getByTestId("draft-banner")).toContainText("unfinished request");
+    await page.getByTestId("draft-banner").getByRole("button", { name: "Continue" }).click();
+    await toStep(page, 2);
+    await expect(page.getByLabel(/Note/)).toHaveValue("Two grocery bags");
   });
 
   test("has no horizontal scroll", async ({ page }) => {

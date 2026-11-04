@@ -5,9 +5,12 @@ import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { postTrip, type PostTripState } from "@/app/(app)/post/actions";
 import { DestinationPicker, type Destination } from "@/components/post/DestinationPicker";
+import { DraftBanner, useDraft } from "@/components/post/draft";
 import { MeetupPointPicker } from "@/components/post/MeetupPointPicker";
+import { ReviewPane, WizardFooter, WizardHeader, useWizard, type ReviewRow } from "@/components/post/Wizard";
 import { CONTACT_INFO_MESSAGE, containsContactInfo } from "@/lib/contact";
 import type { MeetupOption, PlaceOption, SavedCar } from "@/lib/data/post";
+import { formatDeparture } from "@/lib/format/time";
 import { localToUtc } from "@/lib/format/tz";
 
 type Props = {
@@ -19,7 +22,7 @@ type Props = {
   nowIso: string;
 };
 
-const STEP_TITLES = ["Where to", "When", "Seats and car", "Details"];
+const STEP_TITLES = ["Where to", "When", "Seats and car", "Details", "Review"];
 const LAST_STEP = STEP_TITLES.length - 1;
 // Which server field names belong to which pane, so a refusal can send the person to the right one.
 const STEP_FIELDS = [
@@ -27,7 +30,15 @@ const STEP_FIELDS = [
   ["time", "date", "backByTime"],
   ["seats", "carMake", "carColor", "carPlate"],
   ["costNote", "notes"],
+  [],
 ];
+
+// What is kept between visits. The plate is left out on purpose, and so is a searched "somewhere else" place
+// (its search token expires).
+type OfferDraft = {
+  destination: { placeId: string; name: string } | null; date: string; time: string; backBy: string; seats: number;
+  pointId: string; make: string; color: string; cost: string; notes: string;
+};
 
 // "Offer a ride": one scrolling form on desktop, and one pane at a time on phones with smart defaults (next half hour, 3 seats, last used meetup point).
 export function OfferForm({ places, points, campusId, cars, defaults, nowIso, forRequest }: Props) {
@@ -57,14 +68,7 @@ export function OfferForm({ places, points, campusId, cars, defaults, nowIso, fo
   const fieldErrors = state.status === "error" ? (state.fields ?? {}) : {};
 
   // On phones the form shows one pane at a time. From the lg breakpoint up, every pane shows at once.
-  const [step, setStep] = useState(0);
-  const stepHeading = useRef<HTMLHeadingElement>(null);
-  const firstRender = useRef(true);
-  useEffect(() => {
-    if (firstRender.current) { firstRender.current = false; return; }
-    stepHeading.current?.focus();
-  }, [step]);
-
+  const { step, setStep, headingRef, pane } = useWizard();
   // After a refused post, go to the first pane that has a problem (adjusted while rendering, not in an effect).
   const [seenState, setSeenState] = useState(state);
   if (seenState !== state) {
@@ -76,16 +80,15 @@ export function OfferForm({ places, points, campusId, cars, defaults, nowIso, fo
       if (found >= 0) setStep(found);
     }
   }
-  const pane = (i: number) => (step === i ? "" : "max-lg:hidden");
 
   // Warn before the browser tab closes with a half-filled trip.
   const dirty = Boolean(destination !== initialDestination || backBy || make !== (firstCar?.make ?? "") || color !== (firstCar?.color ?? "") || plate !== (firstCar?.plate ?? "") || cost || notes || seats !== 3 || date !== defaults.date || time !== defaults.time || pointId !== initialPoint);
   useEffect(() => {
-    if (!dirty) return;
+    if (!dirty || !forRequest) return; // drafts keep everything else
     const warn = (e: BeforeUnloadEvent) => e.preventDefault();
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
-  }, [dirty]);
+  }, [dirty, forRequest]);
 
   // A time that has already passed gets an inline error before anything is sent.
   const when = date && time ? localToUtc(date, time) : null;
@@ -105,6 +108,46 @@ export function OfferForm({ places, points, campusId, cars, defaults, nowIso, fo
   const ready = Boolean(destination && date && time && pointId && !clientTimeError);
   const disabledReason = !destination ? "Pick where you're going." : !pointId ? "Pick a meetup point." : clientTimeError ? clientTimeError : !date || !time ? "Pick a date and time." : null;
 
+  const now = new Date(nowIso);
+  const reviewRows: ReviewRow[] = [
+    { label: "Going to", value: destination?.name ?? "", step: 0 },
+    { label: "Meetup point", value: points.find((p) => p.id === pointId)?.name ?? "", step: 0 },
+    { label: "Leaving", value: when ? formatDeparture(when, now) : "", step: 1 },
+    { label: "Back by", value: backBy, step: 1 },
+    { label: "Seats open", value: String(seats), step: 2 },
+    { label: "Car", value: [color, make, plate && `(${plate.toUpperCase()})`].filter(Boolean).join(" "), step: 2 },
+    { label: "Cost note", value: cost, step: 3 },
+    { label: "Notes", value: notes, step: 3 },
+  ];
+
+  // Drafts are for a fresh trip only; answering a request starts from that request instead.
+  const draft = useDraft<OfferDraft>("draft:offer", !forRequest);
+  const offered = draft.offered;
+  const snapshot: OfferDraft = {
+    destination: destination?.kind === "place" ? { placeId: destination.placeId, name: destination.name } : null,
+    date, time, backBy, seats, pointId, make, color, cost, notes,
+  };
+  const snapshotKey = JSON.stringify(snapshot);
+  const { save: saveDraft, clear: clearDraft } = draft;
+  useEffect(() => {
+    if (forRequest || offered) return; // while a saved draft is waiting to be answered, leave it alone
+    if (dirty) saveDraft(JSON.parse(snapshotKey));
+    else clearDraft();
+    // saveDraft and clearDraft are fresh functions each render; the snapshot string is what changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [snapshotKey, dirty, forRequest, offered, state]);
+
+  function restore(d: OfferDraft) {
+    if (d.destination) setDestination({ kind: "place", ...d.destination });
+    if (d.date >= defaults.date) { setDate(d.date); setTime(d.time); }
+    setBackBy(d.backBy);
+    setSeats(Math.min(6, Math.max(1, d.seats)));
+    if (points.some((p) => p.id === d.pointId)) setPointId(d.pointId);
+    if (d.make || d.color) { setMake(d.make); setColor(d.color); setPlate(""); }
+    setCost(d.cost);
+    setNotes(d.notes);
+  }
+
   function leave() {
     if (dirty) dialog.current?.showModal();
     else router.push("/post");
@@ -116,6 +159,7 @@ export function OfferForm({ places, points, campusId, cars, defaults, nowIso, fo
         ref={form}
         action={(fd) => {
           if (confirmOverlap) fd.set("confirmOverlap", "1");
+          clearDraft(); // a refused post puts it back (see the effect above)
           action(fd);
         }}
         className="grid gap-x-12 gap-y-8 lg:grid-cols-2"
@@ -129,15 +173,15 @@ export function OfferForm({ places, points, campusId, cars, defaults, nowIso, fo
         <input type="hidden" name="seats" value={seats} />
         {forRequest && <input type="hidden" name="forRequest" value={forRequest.id} />}
 
-<div className="lg:hidden lg:col-span-2" data-testid="stepper">
-          <p className="t-label text-muted" aria-live="polite">Step {step + 1} of {STEP_TITLES.length}</p>
-          <div className="mt-2 flex gap-1" aria-hidden="true">
-            {STEP_TITLES.map((t, i) => (
-              <span key={t} className={`h-1 flex-1 rounded-full ${i <= step ? "bg-ink" : "bg-pale"}`} />
-            ))}
-          </div>
-          <h2 ref={stepHeading} tabIndex={-1} className="t-h2 mt-4 outline-none">{STEP_TITLES[step]}</h2>
-        </div>
+{offered && (
+          <DraftBanner
+            noun="trip"
+            onContinue={() => { restore(offered); draft.dismiss(); }}
+            onStartOver={() => { draft.clear(); draft.dismiss(); }}
+          />
+        )}
+
+        <WizardHeader step={step} titles={STEP_TITLES} headingRef={headingRef} onCancel={leave} />
 
 <div className={`space-y-8 ${pane(0)}`}>
         <DestinationPicker places={places} value={destination} onChange={setDestination} error={fieldErrors.destination} />
@@ -244,6 +288,8 @@ export function OfferForm({ places, points, campusId, cars, defaults, nowIso, fo
         </div>
 
         </div>
+
+        <ReviewPane active={step === LAST_STEP} rows={reviewRows} onEdit={setStep} />
         </div>
 
 <div className="space-y-8 lg:col-span-2">
@@ -259,23 +305,10 @@ export function OfferForm({ places, points, campusId, cars, defaults, nowIso, fo
         )}
         {state.status === "error" && state.message && <p role="alert" className="field-error">{state.message}</p>}
 
-        <div>
-          <div className="flex flex-wrap items-center gap-3">
-            {step < LAST_STEP && (
-              <button type="button" className="btn-primary lg:hidden" disabled={!stepReady[step]} onClick={() => setStep(step + 1)}>
-                Next <span aria-hidden="true">→</span>
-              </button>
-            )}
-            <button type="submit" className={`btn-primary ${step < LAST_STEP ? "max-lg:hidden" : ""}`} disabled={!ready || pending}>
-              {pending ? "Posting…" : "Post trip"} <span aria-hidden="true">↗</span>
-            </button>
-            {step > 0 && (
-              <button type="button" className="btn-secondary lg:hidden" onClick={() => setStep(step - 1)}>Back</button>
-            )}
-            <button type="button" className="btn-secondary" onClick={leave}>Cancel</button>
-          </div>
-          {!ready && disabledReason && <p className="mt-2 text-sm text-muted" data-testid="disabled-reason">{disabledReason}</p>}
-        </div>
+        <WizardFooter
+          step={step} last={LAST_STEP} canNext={stepReady[step]} onNext={() => setStep(step + 1)} onBack={() => setStep(step - 1)}
+          onCancel={leave} submitLabel="Post trip" pendingLabel="Posting…" ready={ready} pending={pending} reason={disabledReason}
+        />
       </div>
 </form>
 
@@ -284,7 +317,7 @@ export function OfferForm({ places, points, campusId, cars, defaults, nowIso, fo
         <p className="mt-2 text-muted">What you&apos;ve entered won&apos;t be saved.</p>
         <div className="mt-6 flex flex-wrap gap-3">
           <button type="button" className="btn-primary" onClick={() => dialog.current?.close()} autoFocus>Keep editing</button>
-          <Link href="/post" className="btn-secondary" onClick={(e) => { dialog.current?.close(); void e; }}>Discard</Link>
+          <Link href="/post" className="btn-secondary" onClick={() => { dialog.current?.close(); clearDraft(); }}>Discard</Link>
         </div>
       </dialog>
     </>
