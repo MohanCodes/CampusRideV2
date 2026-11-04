@@ -52,7 +52,7 @@ test.describe("a profile", () => {
     await page.goto("/user/d1");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Maya");
     await expect(page.getByTestId("bio")).toContainText("Trader Joe's");
-    await expect(page.getByRole("main")).toContainText("Verified");
+    await expect(page.getByRole("main").getByRole("img", { name: "Verified" })).toBeVisible();
     await expect(page.getByRole("main")).not.toContainText("@");
     await expect(page.getByLabel("More options")).toBeVisible();
   });

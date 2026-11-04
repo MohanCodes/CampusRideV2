@@ -2,9 +2,7 @@ import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { AppShell } from "@/components/AppShell";
 import { BoardTabs } from "@/components/board/BoardTabs";
-import { DestinationChips } from "@/components/board/DestinationChips";
 import { RequestCard } from "@/components/board/RequestCard";
-import { SearchBar } from "@/components/board/SearchBar";
 import { TripCard } from "@/components/board/TripCard";
 import { EmptyState, ErrorState, SkeletonGrid } from "@/components/states";
 import { listRequests, listTrips } from "@/lib/data/board";
@@ -23,13 +21,6 @@ export function BoardPage({ filters, signedIn, forceError = false }: { filters: 
       <h1 className="t-h1 mb-6 mt-2 text-[2.4rem] md:text-[3rem]">Claremont Colleges</h1>
 
       <BoardTabs filters={filters} />
-      <div className="mt-6">
-        <DestinationChips filters={filters} />
-      </div>
-
-      <div className="mt-6">
-        <SearchBar filters={filters} />
-      </div>
 
       <section aria-label={filters.tab === "rides" ? "Rides" : "In search of"} className="mt-8">
         <Suspense key={addressKey} fallback={<SkeletonGrid />}>

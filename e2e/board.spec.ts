@@ -21,7 +21,7 @@ test.describe("board", () => {
     await expect(cards(page).first()).toContainText("Platt Campus Center");
     await expect(cards(page).first()).toContainText("Maya");
     await expect(cards(page).first()).toContainText("Harvey Mudd");
-    await expect(cards(page).first()).toContainText("Verified");
+    await expect(cards(page).first().getByRole("img", { name: "Verified" })).toBeVisible();
   });
 
   test("cards show the person's status on that trip", async ({ page }) => {
@@ -37,46 +37,25 @@ test.describe("board", () => {
     expect(text).not.toMatch(/@/);
   });
 
-  test("destination chips filter the board and are shareable links", async ({ page }) => {
+  test("the board has no destination chips or search bar", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("link", { name: "Target", exact: true }).click();
-    await expect(page).toHaveURL(/\?chip=Target$/);
-    await expect(cards(page)).toHaveCount(2);
-    await expect(page.getByRole("link", { name: "Target", exact: true })).toHaveAttribute("aria-current", "true");
-    await page.getByRole("link", { name: "Other", exact: true }).click();
-    await expect(cards(page).first()).toContainText("Ontario Mills");
-    await page.getByRole("link", { name: "All", exact: true }).click();
+    await expect(page.getByRole("navigation", { name: "Destinations" })).toHaveCount(0);
+    await expect(page.getByRole("search")).toHaveCount(0);
     await expect(cards(page)).toHaveCount(7);
   });
 
-  test("search narrows by place, meetup point or name, and the address bar keeps it", async ({ page }) => {
+  test("a shared link with a destination still filters the board", async ({ page }) => {
+    await page.goto("/?chip=Target");
+    await expect(cards(page)).toHaveCount(2);
+  });
+
+  test("a link with a search narrows by place, meetup point or name", async ({ page }) => {
     await page.goto("/?q=airport");
     await expect(cards(page)).toHaveCount(2);
     await page.goto("/?q=platt");
     expect(await cards(page).count()).toBeGreaterThan(0);
     await page.goto("/?q=maya");
     expect(await cards(page).count()).toBeGreaterThan(0);
-  });
-
-  test("the search box finds a trip, and Clear search brings everything back", async ({ page }) => {
-    await page.goto("/");
-    const form = page.getByRole("search", { name: "Search the board" });
-    await form.getByLabel("Search").fill("market");
-    await form.getByRole("button", { name: "Search" }).click();
-    await expect(page).toHaveURL(/q=market/);
-    await expect(cards(page)).toHaveCount(1);
-    await expect(cards(page).first()).toContainText("Farmers Market");
-    await form.getByRole("link", { name: "Clear search" }).click();
-    await expect(cards(page)).toHaveCount(7);
-  });
-
-  test("search keeps the chosen destination chip and the tab", async ({ page }) => {
-    await page.goto("/?chip=Target");
-    const form = page.getByRole("search", { name: "Search the board" });
-    await form.getByLabel("Search").fill("montclair");
-    await form.getByRole("button", { name: "Search" }).click();
-    await expect(page).toHaveURL(/chip=Target/);
-    await expect(page).toHaveURL(/q=montclair/);
   });
 
   test("the old date, college and seats filters are gone", async ({ page }) => {
@@ -173,7 +152,7 @@ test.describe("trip detail", () => {
     await expect(page.locator("dl").getByText("Split gas and parking")).toBeVisible();
     // The driver shows inline on phones and in the sidebar on desktop; either way one copy is visible.
     await expect(page.getByText("Maya", { exact: true }).and(page.locator(":visible"))).toHaveCount(1);
-    await expect(page.getByText("Verified").and(page.locator(":visible"))).toHaveCount(1);
+    await expect(page.getByRole("img", { name: "Verified" }).and(page.locator(":visible"))).toHaveCount(1);
     await expect(page.getByRole("main").getByRole("link", { name: "Board" })).toBeVisible();
   });
 

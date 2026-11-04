@@ -12,7 +12,7 @@ import Link from "next/link";
 
 export const metadata = { title: "Profile — CampusRide" };
 
-// Another student's profile: first name, photo, college, class year, bio, and the verified badge.
+// Another student's profile: first name, photo, college, class year, bio, and the verified check.
 // Never a last name or an email. Report and Block are here, as on every profile.
 export default async function UserPage({ params }: PageProps<"/user/[id]">) {
   const { id } = await params;
@@ -37,11 +37,11 @@ export default async function UserPage({ params }: PageProps<"/user/[id]">) {
         <div className="flex items-center gap-4">
           <Avatar name={p.firstName} url={p.avatarUrl} size={88} />
           <div>
-            <h1 className="t-h1 text-[2.4rem] md:text-[3rem]">{p.firstName}</h1>
-            <p className="flex flex-wrap items-center gap-x-3 text-muted">
-              <span>{campusShortName(p.campusId)}{p.classYear ? ` · class of ${p.classYear}` : ""}</span>
-              <span className="inline-flex items-center gap-1 text-sm font-bold text-green"><Icon name="check" size={14} />Verified</span>
-            </p>
+            <h1 className="t-h1 flex items-center gap-2 text-[2.4rem] md:text-[3rem]">
+              {p.firstName}
+              <span role="img" aria-label="Verified" className="inline-flex text-green"><Icon name="check" size={22} /></span>
+            </h1>
+            <p className="text-muted">{campusShortName(p.campusId)}{p.classYear ? ` · class of ${p.classYear}` : ""}</p>
           </div>
         </div>
         {!isMe && <SafetyMenu target={{ type: "user", id: p.id }} noun="person" person={{ id: p.id, firstName: p.firstName }} />}
