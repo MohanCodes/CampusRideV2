@@ -95,7 +95,7 @@ export function OnboardingForm({
                 id="photo"
                 name="photo"
                 type="file"
-                accept="image/jpeg,image/png,image/webp"
+                accept="image/*"
                 className="field !py-[9px] text-sm"
                 aria-invalid={fields.photo ? true : undefined}
                 aria-describedby="photo-help"
@@ -116,7 +116,7 @@ export function OnboardingForm({
             </div>
           </div>
           <p id="photo-help" className={fields.photo ? "field-error" : "mt-2 text-sm text-muted"} role={fields.photo ? "alert" : undefined}>
-            {fields.photo ?? "A clear photo of your face, so the person you're meeting can recognize you."}
+            {fields.photo ?? "Any photo you like. A clear one helps the person you're meeting recognize you."}
           </p>
         </div>
 

@@ -11,7 +11,7 @@ export const onboardingSchema = z.object({
     .min(2020, "Pick your class year.")
     .max(2035, "Pick your class year."),
   bio: z.string().trim().max(280, "Keep your bio under 280 characters.").optional().default(""),
-  avatarPath: z.string().min(1, "Add a photo of your face to continue."),
+  avatarPath: z.string().min(1, "Add a photo to continue."),
 });
 
 export type OnboardingInput = z.infer<typeof onboardingSchema>;

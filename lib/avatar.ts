@@ -2,7 +2,6 @@ import "server-only";
 import sharp from "sharp";
 import { AVATAR_MAX_INPUT_BYTES } from "@/lib/schemas/onboarding";
 
-export const AVATAR_INPUT_TYPES = ["image/jpeg", "image/png", "image/webp"];
 export const AVATAR_MAX_EDGE = 512;
 
 export class AvatarError extends Error {}
@@ -19,7 +18,7 @@ export async function resizeAvatar(input: Buffer): Promise<Buffer> {
       .webp({ quality: 82 })
       .toBuffer();
   } catch {
-    throw new AvatarError("We couldn't use that file. Pick a JPG, PNG, or WebP photo.");
+    throw new AvatarError("We couldn't read that file. Try a different image.");
   }
 }
 

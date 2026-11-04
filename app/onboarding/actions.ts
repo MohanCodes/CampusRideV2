@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { AVATAR_INPUT_TYPES, AvatarError, avatarPathFor, resizeAvatar } from "@/lib/avatar";
+import { AvatarError, avatarPathFor, resizeAvatar } from "@/lib/avatar";
 import { getMyProfile, getUser } from "@/lib/auth/dal";
 import { errorMessage } from "@/lib/errors";
 import { safeNext } from "@/lib/routes";
@@ -48,8 +48,9 @@ export async function saveProfileStep(_prev: ProfileStepState, formData: FormDat
   }
 
   if (hasNewPhoto) {
-    if (!AVATAR_INPUT_TYPES.includes(file.type)) {
-      return { status: "error", fields: { photo: "Pick a JPG, PNG, or WebP photo." } };
+    // Any image is fine. The type label can be blank or odd (HEIC, for one), so sharp decides whether it can be read.
+    if (file.type && !file.type.startsWith("image/")) {
+      return { status: "error", fields: { photo: "Pick an image file." } };
     }
     try {
       const body = await resizeAvatar(Buffer.from(await file.arrayBuffer()));

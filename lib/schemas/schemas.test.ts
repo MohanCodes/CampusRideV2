@@ -39,7 +39,7 @@ describe("onboardingSchema", () => {
   it("requires the photo with a plain message", () => {
     const r = onboardingSchema.safeParse({ ...ok, avatarPath: "" });
     expect(r.success).toBe(false);
-    if (!r.success) expect(r.error.issues[0].message).toBe("Add a photo of your face to continue.");
+    if (!r.success) expect(r.error.issues[0].message).toBe("Add a photo to continue.");
   });
   it.each([{ firstName: "" }, { lastName: "   " }, { classYear: "1999" }, { classYear: "abc" }, { bio: "x".repeat(281) }])(
     "rejects %j",

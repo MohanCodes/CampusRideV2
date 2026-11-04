@@ -27,7 +27,10 @@ export async function shrinkPhoto(file: File): Promise<File> {
     ctx.drawImage(bitmap, 0, 0, width, height);
     bitmap.close();
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", SHRINK_QUALITY));
-    if (!blob || blob.size >= file.size) return file;
+    if (!blob) return file;
+    // Formats the server can't always read (HEIC, AVIF, GIF) are always converted, even if the JPEG is bigger.
+    const serverReads = ["image/jpeg", "image/png", "image/webp"].includes(file.type);
+    if (serverReads && blob.size >= file.size) return file;
     return new File([blob], "photo.jpg", { type: "image/jpeg" });
   } catch {
     return file;
