@@ -1,10 +1,10 @@
 // Mapbox Search Box API, for "Other" destinations. BUILD.md 6.5: limited to a box around Southern
-// California and to points of interest and places. Street addresses are rejected, so a private
-// residence can't be chosen. Functions take the token and fetch as arguments so they can be tested.
+// California and to points of interest, places, and street addresses. (Addresses were allowed on purpose: a
+// destination is not a meetup, which is always an approved point.) Functions take the token and fetch as arguments so they can be tested.
 
 // minLon, minLat, maxLon, maxLat. Matches the check inside post_trip.
 export const SOCAL_BBOX = [-121.0, 32.0, -114.0, 35.9] as const;
-export const ALLOWED_FEATURE_TYPES = ["poi", "place"] as const;
+export const ALLOWED_FEATURE_TYPES = ["poi", "place", "address"] as const;
 
 export type DestinationSuggestion = { mapboxId: string; name: string; detail: string };
 export type VerifiedDestination = { mapboxId: string; name: string; lat: number; lng: number };

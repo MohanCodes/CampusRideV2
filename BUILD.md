@@ -591,7 +591,7 @@ Declining sets the offer to `declined` and queues `offer_declined`. A trip a dri
 ### 6.5 Destinations: curated list plus "Other"
 
 - Normal destinations are rows in `places`, managed by admins. The seed (Section 9) includes the Trader Joe's, Target, Village, ONT, LAX, and other places from the Mudd localization file.
-- "Other" uses the Mapbox Search API from the server, limited to a bounding box around Southern California and to results of type `poi`, `place`, or `airport`. Results of type `address` are rejected, so a private residence can't be chosen. The chosen name and coordinates are sent to `post_trip` and stored on the trip.
+- "Other" uses the Mapbox Search API from the server, limited to a bounding box around Southern California and to results of type `poi`, `place`, or `address` (changed by the owner on 2026-11-05: street addresses are now allowed as destinations; meetups are still approved points only). The chosen name and coordinates are sent to `post_trip` and stored on the trip.
 
 ### 6.6 Rate limiting and abuse
 
@@ -774,5 +774,5 @@ Build in this order. Each step ends with something you can check.
 - **No stored "full" status.** A trip is full when `seats_taken = seats_total`; the board query hides it.
 - **Email only, queued.** Nothing sends mail inside a request, so a slow provider never blocks a user.
 - **No location, ever.** Meetup points are fixed rows with coordinates; the app never asks the browser for the user's location.
-- **Curated destinations first.** "Other" is limited to points of interest, so private addresses can't be chosen.
+- **Curated destinations first.** "Other" is limited to points of interest, places and street addresses, and only as a destination, never a meetup.
 - **Plain text chat.** No attachments or links in chat at launch, which also removes most abuse and storage risk. (Links and phone numbers are blocked in notes; chat is plain text only and the app doesn't turn anything in it into a link.)

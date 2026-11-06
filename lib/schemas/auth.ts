@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { canonicalEmail } from "@/lib/email";
 
 export const NOT_SCHOOL_EMAIL = "Use your school email.";
 export const BAD_CODE = "That code didn't work. Check it and try again.";
@@ -8,7 +9,8 @@ export const emailSchema = z
   .trim()
   .toLowerCase()
   .max(254, NOT_SCHOOL_EMAIL)
-  .pipe(z.email(NOT_SCHOOL_EMAIL));
+  .pipe(z.email(NOT_SCHOOL_EMAIL))
+  .transform(canonicalEmail);
 
 export const codeSchema = z.string().trim().regex(/^\d{6}$/, BAD_CODE);
 

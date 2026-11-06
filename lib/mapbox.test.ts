@@ -18,7 +18,7 @@ const suggest = {
 describe("urls", () => {
   it("limit the search to places and points of interest inside the Southern California box", () => {
     const u = new URL(suggestUrl("botanic", "sess", "pk.test"));
-    expect(u.searchParams.get("types")).toBe("poi,place");
+    expect(u.searchParams.get("types")).toBe("poi,place,address");
     expect(u.searchParams.get("bbox")).toBe(SOCAL_BBOX.join(","));
     expect(u.searchParams.get("country")).toBe("us");
     expect(u.searchParams.get("q")).toBe("botanic");
@@ -29,8 +29,8 @@ describe("urls", () => {
 });
 
 describe("parseSuggestions", () => {
-  it("keeps points of interest and places, and drops addresses and streets", () => {
-    expect(parseSuggestions(suggest).map((s) => s.name)).toEqual(["Rancho Santa Ana Botanic Garden", "Upland"]);
+  it("keeps points of interest, places and addresses, and drops streets", () => {
+    expect(parseSuggestions(suggest).map((s) => s.name)).toEqual(["Rancho Santa Ana Botanic Garden", "Upland", "123 Oak Street"]);
   });
   it("copes with garbage", () => {
     for (const v of [null, undefined, {}, { suggestions: "x" }, 5]) expect(parseSuggestions(v)).toEqual([]);
@@ -44,7 +44,8 @@ describe("parseRetrieve", () => {
   it("returns the verified name and coordinates", () => {
     expect(parseRetrieve(feature("poi", [-117.7, 34.1]))).toEqual({ mapboxId: "poi.1", name: "Garden", lat: 34.1, lng: -117.7 });
   });
-  it("rejects an address even if asked for by id", () => expect(parseRetrieve(feature("address", [-117.7, 34.1]))).toBeNull());
+  it("accepts an address", () => expect(parseRetrieve(feature("address", [-117.7, 34.1]))?.lat).toBe(34.1));
+  it("rejects a street or a region", () => expect(parseRetrieve(feature("street", [-117.7, 34.1]))).toBeNull());
   it("rejects a point outside Southern California", () => expect(parseRetrieve(feature("poi", [-74, 40.7]))).toBeNull());
   it("rejects malformed responses", () => {
     for (const v of [null, {}, { features: [] }, feature("poi", "nope"), feature("poi", [1])]) expect(parseRetrieve(v)).toBeNull();
@@ -62,7 +63,7 @@ describe("network calls", () => {
     expect(seen).toEqual({ Referer: "https://campusride.example" });
   });
   it("return suggestions, or null when Mapbox fails", async () => {
-    expect((await searchDestinations("g", "s", "t", "x", ok(suggest)))?.length).toBe(2);
+    expect((await searchDestinations("g", "s", "t", "x", ok(suggest)))?.length).toBe(3);
     expect(await searchDestinations("g", "s", "t", "x", async () => ({ ok: false, json: async () => ({}) }))).toBeNull();
     expect(await searchDestinations("g", "s", "t", "x", async () => { throw new Error("offline"); })).toBeNull();
   });

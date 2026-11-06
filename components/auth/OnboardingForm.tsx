@@ -80,7 +80,7 @@ export function OnboardingForm({
       >
         <div>
           <label htmlFor="photo" className="mb-2 block text-sm font-bold">
-            Photo
+            Photo <span className="font-normal text-muted">(optional)</span>
           </label>
           <div className="flex items-center gap-4">
             <span
@@ -116,7 +116,7 @@ export function OnboardingForm({
             </div>
           </div>
           <p id="photo-help" className={fields.photo ? "field-error" : "mt-2 text-sm text-muted"} role={fields.photo ? "alert" : undefined}>
-            {fields.photo ?? "Any photo you like. A clear one helps the person you're meeting recognize you."}
+            {fields.photo ?? "Optional. A clear photo helps the person you're meeting recognize you. Without one, people see your initial."}
           </p>
         </div>
 

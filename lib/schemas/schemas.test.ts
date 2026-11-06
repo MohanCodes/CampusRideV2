@@ -36,10 +36,9 @@ describe("onboardingSchema", () => {
     expect(r.classYear).toBe(2028);
   });
   it("trims names", () => expect(onboardingSchema.parse({ ...ok, firstName: "  Uma  " }).firstName).toBe("Uma"));
-  it("requires the photo with a plain message", () => {
-    const r = onboardingSchema.safeParse({ ...ok, avatarPath: "" });
-    expect(r.success).toBe(false);
-    if (!r.success) expect(r.error.issues[0].message).toBe("Add a photo to continue.");
+  it("does not require a photo", () => {
+    expect(onboardingSchema.parse({ ...ok, avatarPath: "" }).avatarPath).toBe("");
+    expect(onboardingSchema.parse({ firstName: "Uma", lastName: "Patel", classYear: "2028" }).avatarPath).toBe("");
   });
   it.each([{ firstName: "" }, { lastName: "   " }, { classYear: "1999" }, { classYear: "abc" }, { bio: "x".repeat(281) }])(
     "rejects %j",

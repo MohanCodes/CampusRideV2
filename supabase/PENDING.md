@@ -105,3 +105,10 @@ The "Add a meetup point" form has a click-to-pick map built on Leaflet with Open
 admin-only; the map riders see is still Mapbox. OpenStreetMap's public tile servers are meant for light use with the
 attribution the map already shows, which fits an admin page. If it ever gets heavy use, switch the tile address in
 `components/admin/LocationPicker.tsx` (and `lib/csp.ts`) to a tile provider you pay for.
+
+## Changes on 2026-11-05
+
+- **Photo is optional.** Migration `20261105000001_optional_avatar.sql` lets `complete_onboarding` take a null photo; people without one show an initial.
+- **Email aliases.** `g.hmc.edu` becomes `hmc.edu` and `claremontmckenna.edu` becomes `cmc.edu` before the code is sent (`lib/email.ts`). The database still accepts both domains. Confirm with HMC and CMC IT that the shorter address reaches the same inbox.
+- **Street addresses allowed as destinations** (owner's decision; reverses the earlier rule). Meetups are still approved points only. The destination is still limited to the Southern California box in `lib/mapbox.ts` and `post_trip`.
+- **Pomona, Scripps, CMC, Pitzer** have campus rows and domains. Meetup points and safety numbers are left for admins.

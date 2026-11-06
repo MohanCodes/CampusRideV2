@@ -1,7 +1,7 @@
 -- Step 3: school-email sign-in, profile creation, and onboarding. BUILD.md Section 4 and 6.1.
 -- Run with `supabase test db`. Everything rolls back.
 begin;
-select plan(48);
+select plan(49);
 
 -- The auth hook: allowed domains --------------------------------------------------------------------
 select is(hook_restrict_signup_domain(jsonb_build_object('user', jsonb_build_object('email', 'maya@hmc.edu'))), '{}'::jsonb, 'the hook allows maya@hmc.edu');
@@ -70,10 +70,11 @@ select throws_ok($$ select complete_onboarding('Uma', 'Patel', 2099, null, '0000
                  'P0001', 'invalid_profile', 'an impossible class year is refused');
 select throws_ok($$ select complete_onboarding('Uma', 'Patel', 2028, repeat('x', 281), '00000000-0000-0000-0000-0000000000f1/profile.webp') $$,
                  'P0001', 'invalid_profile', 'a bio over 280 characters is refused');
-select throws_ok($$ select complete_onboarding('Uma', 'Patel', 2028, null, null) $$,
-                 'P0001', 'invalid_profile', 'a photo is required');
+select throws_ok($$ select complete_onboarding('Uma', 'Patel', 2028, null, '00000000-0000-0000-0000-0000000000f1/missing.webp') $$,
+                 'P0001', 'invalid_profile', 'a chosen photo has to exist');
 select throws_ok($$ select complete_onboarding('Uma', 'Patel', 2028, null, '00000000-0000-0000-0000-0000000000f2/profile.webp') $$,
                  'P0001', 'invalid_profile', 'a photo from someone else''s folder is refused');
+select lives_ok($$ select complete_onboarding('Uma', 'Patel', 2028, null, null) $$, 'a photo is optional');
 select lives_ok($$ select complete_onboarding('  Uma ', 'Patel', 2028, '  Loves hiking  ', '00000000-0000-0000-0000-0000000000f1/profile.webp') $$,
                 'a complete profile is accepted');
 select is((select first_name || ' ' || last_name || ' ' || class_year || ' ' || bio from profiles where id = '00000000-0000-0000-0000-0000000000f1'),

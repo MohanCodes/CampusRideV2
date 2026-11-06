@@ -67,7 +67,7 @@ export async function saveProfileStep(_prev: ProfileStepState, formData: FormDat
   return { status: "ok", values: parsed.data };
 }
 
-// Step 2 of 2: "I agree". The database function re-checks everything, including that the photo exists.
+// Step 2 of 2: "I agree". The database function re-checks everything, including that a chosen photo exists.
 export async function finishOnboarding(_prev: FinishState, formData: FormData): Promise<FinishState> {
   const supabase = await createClient();
   if (!supabase) return { status: "error", message: errorMessage("not_signed_in") };
@@ -86,7 +86,7 @@ export async function finishOnboarding(_prev: FinishState, formData: FormData): 
     p_last: parsed.data.lastName,
     p_class_year: parsed.data.classYear,
     p_bio: parsed.data.bio,
-    p_avatar_path: parsed.data.avatarPath,
+    p_avatar_path: parsed.data.avatarPath || null,
   });
   if (error) return { status: "error", message: errorMessage(error) };
 

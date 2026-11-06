@@ -98,7 +98,7 @@ test.describe("the offer form", () => {
     await page.getByRole("button", { name: "Change" }).click();
     await page.getByLabel("Search places").fill("123 Oak Street");
     await expect(page.getByText("No matches. Try another name.")).toBeVisible();
-    await expect(page.getByText("Home addresses can't be chosen.")).toBeVisible();
+    await expect(page.getByText("Your meetup is still an approved spot.")).toBeVisible();
   });
 
   test("a time in the past is refused inline, with the button off and the reason shown", async ({ page }) => {

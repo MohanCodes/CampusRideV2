@@ -12,7 +12,7 @@ export type Destination =
 const INITIAL_COUNT = 6;
 
 // Where to: a curated list first (stores, the Village, airports), then "somewhere else" from a
-// Mapbox search limited to public places. Home addresses can't be chosen.
+// Mapbox search (places and street addresses). Meetups stay at approved points.
 export function DestinationPicker({
   places, value, onChange, error,
 }: {
@@ -72,7 +72,7 @@ export function DestinationPicker({
         />
       </div>
       <p id="destination-help" className="mt-1 text-sm text-muted">
-        Pick a store, airport, station, or other public place. Home addresses can&apos;t be chosen.
+        Pick a store, airport, station, or search any place or address. Your meetup is still an approved spot.
       </p>
       {error && <p id="destination-error" role="alert" className="field-error">{error}</p>}
 
